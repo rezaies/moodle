@@ -161,10 +161,15 @@ class MoodleQuickForm_editor extends HTML_QuickForm_element {
     /**
      * Returns editor values
      *
-     * @return array
+     * @return array|null
      */
     function getValue() {
-        return $this->_values;
+        foreach ($this->_values as $value) {
+            if (!is_null($value)) {
+                return $this->_values;
+            }
+        }
+        return null;
     }
 
     /**
