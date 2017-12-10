@@ -97,7 +97,7 @@ class qtype_calculated_edit_form extends qtype_numerical_edit_form {
                 get_string('tolerancetype', 'qtype_calculated'), $this->qtypeobj->tolerance_types());
         $repeated[] = $mform->createElement('group', 'answertolerance',
                  get_string('tolerance', 'qtype_calculated'), $answertolerance, null, false);
-        $repeatedoptions['tolerance']['default'] = 0.01;
+        $repeatedoptions['tolerance']['default'] = format_float(0.01, 2);
 
         // Create display group.
         $answerdisplay = array();

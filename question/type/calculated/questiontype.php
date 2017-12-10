@@ -719,8 +719,8 @@ class qtype_calculated extends question_type {
                 get_string('calcmax', 'qtype_calculated'));
         $mform->addGroup($minmaxgrp, 'minmaxgrp',
                 get_string('minmax', 'qtype_calculated'), ' - ', false);
-        $mform->setType("calcmin[{$idx}]", PARAM_FLOAT);
-        $mform->setType("calcmax[{$idx}]", PARAM_FLOAT);
+        $mform->setType("calcmin[{$idx}]", PARAM_RAW);
+        $mform->setType("calcmax[{$idx}]", PARAM_RAW);
 
         $precisionoptions = range(0, 10);
         $mform->addElement('select', "calclength[{$idx}]",
@@ -737,10 +737,23 @@ class qtype_calculated extends question_type {
         foreach ($datasetdefs as $datasetdef) {
             if (preg_match('~^(uniform|loguniform):([^:]*):([^:]*):([0-9]*)$~',
                     $datasetdef->options, $regs)) {
-                $defid = "{$datasetdef->type}-{$datasetdef->category}-{$datasetdef->name}";
                 $formdata["calcdistribution[{$idx}]"] = $regs[1];
-                $formdata["calcmin[{$idx}]"] = $regs[2];
-                $formdata["calcmax[{$idx}]"] = $regs[3];
+                if (is_numeric($regs[2])) {
+                    if ($regs[2] > 0) {
+                        $decimals = strlen($regs[2]) - strlen(floor($regs[2])) - 1;
+                    } else {
+                        $decimals = strlen($regs[2]) - strlen(ceil($regs[2])) - 1;
+                    }
+                    $formdata["calcmin[{$idx}]"] = format_float($regs[2], $decimals);
+                }
+                if (is_numeric($regs[3])) {
+                    if ($regs[3] > 0) {
+                        $decimals = strlen($regs[3]) - strlen(floor($regs[3])) - 1;
+                    } else {
+                        $decimals = strlen($regs[3]) - strlen(ceil($regs[3])) - 1;
+                    }
+                    $formdata["calcmax[{$idx}]"] = format_float($regs[3], $decimals);
+                }
                 $formdata["calclength[{$idx}]"] = $regs[4];
             }
             $idx++;
@@ -1183,8 +1196,8 @@ class qtype_calculated extends question_type {
         // All calculations used this function so testing here should be OK.
 
         foreach ($dataset as $name => $value) {
-            $val = $value;
-            if (! is_numeric($val)) {
+            $val = unformat_float($value, true);
+            if ($val === false) {
                 $a = new stdClass();
                 $a->name = '{'.$name.'}';
                 $a->value = $value;

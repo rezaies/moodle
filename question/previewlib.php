@@ -54,7 +54,7 @@ class preview_options_form extends moodleform {
 
         $mform->addElement('text', 'maxmark', get_string('markedoutof', 'question'),
                 array('size' => '5'));
-        $mform->setType('maxmark', PARAM_FLOAT);
+        $mform->setType('maxmark', PARAM_RAW);
 
         if ($this->_customdata['maxvariant'] > 1) {
             $variants = range(1, $this->_customdata['maxvariant']);
@@ -95,6 +95,36 @@ class preview_options_form extends moodleform {
 
         $mform->addElement('submit', 'saveupdate',
                 get_string('updatedisplayoptions', 'question'));
+    }
+
+    public function get_submitted_data() {
+        $data = parent::get_submitted_data();
+
+        if (!empty($data->maxmark)) {
+            $data->maxmark = unformat_float($data->maxmark, true);
+        }
+
+        return $data;
+    }
+
+    public function get_data() {
+        $data = parent::get_data();
+
+        if (!empty($data->maxmark)) {
+            $data->maxmark = unformat_float($data->maxmark, true);
+        }
+
+        return $data;
+    }
+
+    public function set_data($defaults) {
+        if (is_object($defaults)) {
+            $defaults = (array)$defaults;
+        }
+        if (!empty($defaults['maxmark'])) {
+            $defaults['maxmark'] = format_float($defaults['maxmark'], strlen($defaults['maxmark']), true, true);
+        }
+        parent::set_data($defaults);
     }
 }
 
@@ -193,7 +223,12 @@ class question_preview_options extends question_display_options {
      */
     public function set_from_request() {
         foreach ($this->get_field_types() as $field => $type) {
-            $this->$field = optional_param($field, $this->$field, $type);
+            if ($type == PARAM_FLOAT) {
+                $this->$field = optional_param($field, $this->$field, PARAM_RAW);
+                $this->$field = unformat_float($this->$field, true);
+            } else {
+                $this->$field = optional_param($field, $this->$field, $type);
+            }
         }
         $this->numpartscorrect = $this->feedback;
     }

@@ -189,7 +189,7 @@ abstract class question_edit_form extends question_wizard_form {
 
         $mform->addElement('text', 'defaultmark', get_string('defaultmark', 'question'),
                 array('size' => 7));
-        $mform->setType('defaultmark', PARAM_FLOAT);
+        $mform->setType('defaultmark', PARAM_RAW);
         $mform->setDefault('defaultmark', 1);
         $mform->addRule('defaultmark', null, 'required', null, 'client');
 
@@ -469,6 +469,11 @@ abstract class question_edit_form extends question_wizard_form {
                 editors_get_preferred_format() : $question->questiontextformat;
         $question->questiontext['itemid'] = $draftid;
 
+        // Format default mark.
+        if (!empty($question->defaultmark)) {
+            $question->defaultmark = format_float($question->defaultmark, strlen($question->defaultmark), true, true);
+        }
+
         // Prepare general feedback.
         $draftid = file_get_submitted_draft_itemid('generalfeedback');
 
@@ -733,8 +738,13 @@ abstract class question_edit_form extends question_wizard_form {
         }
 
         // Default mark.
-        if (array_key_exists('defaultmark', $fromform) && $fromform['defaultmark'] < 0) {
-            $errors['defaultmark'] = get_string('defaultmarkmustbepositive', 'question');
+        if (array_key_exists('defaultmark', $fromform)) {
+            $defaultmark = unformat_float($fromform['defaultmark'], true);
+            if ($defaultmark === false) {
+                $errors['defaultmark'] = get_string('invalidnum', 'error');
+            } else if ($defaultmark < 0) {
+                $errors['defaultmark'] = get_string('defaultmarkmustbepositive', 'question');
+            }
         }
 
         return $errors;
@@ -757,4 +767,13 @@ abstract class question_edit_form extends question_wizard_form {
         return $this->editoroptions;
     }
 
+    public function get_data() {
+        $data = parent::get_data();
+
+        if (!empty($data->defaultmark)) {
+            $data->defaultmark = unformat_float($data->defaultmark, true);
+        }
+
+        return $data;
+    }
 }
