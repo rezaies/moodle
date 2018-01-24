@@ -94,5 +94,87 @@ function xmldb_quiz_upgrade($oldversion) {
     // Automatically generated Moodle v3.4.0 release upgrade line.
     // Put any upgrade step following this.
 
+    if ($oldversion < 2018012400) {
+
+        // Define key questionid (foreign) to be dropped form quiz_slots.
+        $table = new xmldb_table('quiz_slots');
+        $key = new xmldb_key('questionid', XMLDB_KEY_FOREIGN, array('questionid'), 'question', array('id'));
+
+        // Launch drop key questionid.
+        $dbman->drop_key($table, $key);
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2018012400, 'quiz');
+    }
+
+    if ($oldversion < 2018012401) {
+
+        // Changing nullability of field questionid on table quiz_slots to null.
+        // Also changing the default of field questionid on table quiz_slots to drop it.
+        $table = new xmldb_table('quiz_slots');
+        $field = new xmldb_field('questionid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'requireprevious');
+
+        // Launch change of nullability for field questionid.
+        $dbman->change_field_notnull($table, $field);
+
+        // Launch change of default for field questionid.
+        $dbman->change_field_default($table, $field);
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2018012401, 'quiz');
+    }
+
+    if ($oldversion < 2018012402) {
+
+        // Define key questionid (foreign) to be added to quiz_slots.
+        $table = new xmldb_table('quiz_slots');
+        $key = new xmldb_key('questionid', XMLDB_KEY_FOREIGN, array('questionid'), 'question', array('id'));
+
+        // Launch add key questionid.
+        $dbman->add_key($table, $key);
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2018012402, 'quiz');
+    }
+
+    if ($oldversion < 2018012403) {
+
+        $table = new xmldb_table('quiz_slots');
+
+        // Define field questioncategoryid to be added to quiz_slots.
+        $field = new xmldb_field('questioncategoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'questionid');
+        // Conditionally launch add field questioncategoryid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define key questioncategoryid (foreign) to be added to quiz_slots.
+        $key = new xmldb_key('questioncategoryid', XMLDB_KEY_FOREIGN, array('questioncategoryid'), 'questioncategory', array('id'));
+        // Launch add key questioncategoryid.
+        $dbman->add_key($table, $key);
+
+        // Define field includingsubcategories to be added to quiz_slots.
+        $field = new xmldb_field('includingsubcategories', XMLDB_TYPE_INTEGER, '4', null, null, null, null, 'questioncategoryid');
+        // Conditionally launch add field includingsubcategories.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field tagid to be added to quiz_slots.
+        $field = new xmldb_field('tagid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'includingsubcategories');
+        // Conditionally launch add field tagid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define key tagid (foreign) to be added to quiz_slots.
+        $key = new xmldb_key('tagid', XMLDB_KEY_FOREIGN, array('tagid'), 'tag', array('id'));
+        // Launch add key tagid.
+        $dbman->add_key($table, $key);
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2018012403, 'quiz');
+    }
+
     return true;
 }
