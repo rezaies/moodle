@@ -702,6 +702,7 @@ $string['randomnosubcat'] = 'Questions from this category only, not its subcateg
 $string['randomqname'] = 'Random ({$a})';
 $string['randomqplusname'] = 'Random ({$a} and subcategories)';
 $string['randomquestionusinganewcategory'] = 'Random question using a new category';
+$string['randomtype'] = 'Random';
 $string['randomwithsubcat'] = 'Questions from this category and its subcategories.';
 $string['readytosend'] = 'You are about to send your whole quiz to be graded.  Are you sure you want to continue?';
 $string['reattemptquiz'] = 'Re-attempt quiz';

@@ -738,7 +738,7 @@ class edit_renderer extends \plugin_renderer_base {
         $output .= html_writer::div('', 'mod-indent');
 
         // Display the link to the question (or do nothing if question has no url).
-        if ($structure->get_question_type_for_slot($slot) == 'random') {
+        if ($structure->is_random_question_in_slot($slot)) {
             $questionname = $this->random_question($structure, $slot, $pageurl);
         } else {
             $questionname = $this->question_name($structure, $slot, $pageurl);
@@ -959,25 +959,25 @@ class edit_renderer extends \plugin_renderer_base {
      * and also to see that category in the question bank.
      *
      * @param structure $structure object containing the structure of the quiz.
-     * @param int $slot which slot we are outputting.
+     * @param int $slotnumber which slot we are outputting.
      * @param \moodle_url $pageurl the canonical URL of this page.
      * @return string HTML to output.
      */
-    public function random_question(structure $structure, $slot, $pageurl) {
+    public function random_question(structure $structure, $slotnumber, $pageurl) {
 
-        $question = $structure->get_question_in_slot($slot);
+        $slot = $structure->get_slot_by_number($slotnumber);
+        $questioncategory = $slot->get_questioncategory();
         $editurl = new \moodle_url('/question/question.php', array(
                 'returnurl' => $pageurl->out_as_local_url(),
-                'cmid' => $structure->get_cmid(), 'id' => $question->id));
+                'cmid' => $structure->get_cmid(), 'slotid' => $slot->id));
 
-        $temp = clone($question);
-        $temp->questiontext = '';
-        $instancename = quiz_question_tostring($temp);
+        $instancename = format_string($slot->question_name());
+        $instancename = shorten_text($instancename, 200);
+        $instancename = html_writer::span($instancename, 'questionname');
 
         $configuretitle = get_string('configurerandomquestion', 'quiz');
-        $qtype = \question_bank::get_qtype($question->qtype, false);
-        $namestr = $qtype->local_name();
-        $icon = $this->pix_icon('icon', $namestr, $qtype->plugin_name(), array('title' => $namestr,
+        $namestr = get_string('randomtype', 'quiz');
+        $icon = $this->pix_icon('randomquestion', $namestr, 'mod_quiz', array('title' => $namestr,
                 'class' => 'icon activityicon', 'alt' => ' ', 'role' => 'presentation'));
 
         $editicon = $this->pix_icon('t/edit', $configuretitle, 'moodle', array('title' => ''));
@@ -986,8 +986,8 @@ class edit_renderer extends \plugin_renderer_base {
         // selected from in the question bank.
         $qbankurl = new \moodle_url('/question/edit.php', array(
                 'cmid' => $structure->get_cmid(),
-                'cat' => $question->category . ',' . $question->contextid,
-                'recurse' => !empty($question->questiontext)));
+                'cat' => $slot->questioncategoryid . ',' . $questioncategory->contextid,
+                'recurse' => !empty($slot->includingsubcategories)));
         $qbanklink = ' ' . \html_writer::link($qbankurl,
                 get_string('seequestions', 'quiz'), array('class' => 'mod_quiz_random_qbank_link'));
 
@@ -1252,5 +1252,16 @@ class edit_renderer extends \plugin_renderer_base {
         $qbank = $questionbank->render('editq', $pagevars['qpage'], $pagevars['qperpage'],
                 $pagevars['cat'], $pagevars['recurse'], $pagevars['showhidden'], $pagevars['qbshowtext']);
         return html_writer::div(html_writer::div($qbank, 'bd'), 'questionbankformforpopup');
+    }
+
+    /**
+     * Output the icon for a "random" question.
+     *
+     * @return string HTML fragment.
+     */
+    public function randomquestion_icon() {
+        $namestr = get_string('randomtype', 'quiz');
+
+        return $this->image_icon('randomquestion', $namestr, 'mod_quiz', array('title' => $namestr));
     }
 }
