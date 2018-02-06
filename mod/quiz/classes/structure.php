@@ -23,6 +23,8 @@
  */
 
 namespace mod_quiz;
+use mod_quiz\local\structure\slot_type;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -47,7 +49,7 @@ class structure {
      */
     protected $questions = array();
 
-    /** @var \stdClass[] quiz_slots.id => the quiz_slots rows for this quiz, agumented by sectionid. */
+    /** @var slot_type[] quiz_slots.id => the quiz_slots rows for this quiz, agumented by sectionid. */
     protected $slots = array();
 
     /** @var \stdClass[] quiz_slots.slot => the quiz_slots rows for this quiz, agumented by sectionid. */
@@ -103,9 +105,16 @@ class structure {
      * @param int $questionid The question id.
      * @return \stdClass the data from the questions table, augmented with
      * question_category.contextid, and the quiz_slots data for the question in this quiz.
+     * @throws \coding_exception
      */
     public function get_question_by_id($questionid) {
-        return $this->questions[$questionid];
+        foreach ($this->questions as $question) {
+            if ($question->id == $$questionid) {
+                return $question;
+            }
+        }
+
+        throw new \coding_exception('The \'$questionid\' could not be found.');
     }
 
     /**
@@ -115,7 +124,7 @@ class structure {
      * question_category.contextid, and the quiz_slots data for the question in this quiz.
      */
     public function get_question_in_slot($slotnumber) {
-        return $this->questions[$this->slotsinorder[$slotnumber]->questionid];
+        return $this->questions[$slotnumber];
     }
 
     /**
@@ -151,7 +160,16 @@ class structure {
      * @return string the question type (e.g. multichoice).
      */
     public function get_question_type_for_slot($slotnumber) {
-        return $this->questions[$this->slotsinorder[$slotnumber]->questionid]->qtype;
+        return $this->questions[$slotnumber]->qtype;
+    }
+
+    /**
+     * Specifies whether the question hosted in a given slot is a "random" question or not.
+     * @param int $slotnumber
+     * @return bool
+     */
+    public function is_random_question_in_slot($slotnumber) {
+        return empty($this->slotsinorder[$slotnumber]->questionid);
     }
 
     /**
@@ -400,13 +418,29 @@ class structure {
     /**
      * Get a slot by it's id. Throws an exception if it is missing.
      * @param int $slotid the slot id.
-     * @return \stdClass the requested quiz_slots row.
+     * @return slot_type the requested quiz_slots row.
      */
     public function get_slot_by_id($slotid) {
         if (!array_key_exists($slotid, $this->slots)) {
             throw new \coding_exception('The \'slotid\' could not be found.');
         }
         return $this->slots[$slotid];
+    }
+
+    /**
+     * Get a slot by it's slot number. Throws an exception if it is missing.
+     * @param $slotnumber
+     * @return slot_type
+     * @throws \coding_exception
+     */
+    public function get_slot_by_number($slotnumber) {
+        foreach ($this->slots as $slot) {
+            if ($slot->slot == $slotnumber) {
+                return $slot;
+            }
+        }
+
+        throw new \coding_exception('The \'slotnumber\' could not be found.');
     }
 
     /**
@@ -580,34 +614,21 @@ class structure {
     public function populate_structure($quiz) {
         global $DB;
 
-        $slots = $DB->get_records_sql("
-                SELECT slot.id AS slotid, slot.slot, slot.questionid, slot.page, slot.maxmark,
-                        slot.requireprevious, q.*, qc.contextid
-                  FROM {quiz_slots} slot
-                  LEFT JOIN {question} q ON q.id = slot.questionid
-                  LEFT JOIN {question_categories} qc ON qc.id = q.category
-                 WHERE slot.quizid = ?
-              ORDER BY slot.slot", array($quiz->id));
-
-        $slots = $this->populate_missing_questions($slots);
+        $slots = $DB->get_records('quiz_slots', array('quizid' => $quiz->id), 'slot');
+        //$slots = $this->populate_missing_questions($slots);
 
         $this->questions = array();
         $this->slots = array();
         $this->slotsinorder = array();
         foreach ($slots as $slotdata) {
-            $this->questions[$slotdata->questionid] = $slotdata;
-
-            $slot = new \stdClass();
-            $slot->id = $slotdata->slotid;
-            $slot->slot = $slotdata->slot;
-            $slot->quizid = $quiz->id;
-            $slot->page = $slotdata->page;
-            $slot->questionid = $slotdata->questionid;
-            $slot->maxmark = $slotdata->maxmark;
-            $slot->requireprevious = $slotdata->requireprevious;
+            $slot = \mod_quiz\local\structure\slot_factory::build_from_slot_record($slotdata);
 
             $this->slots[$slot->id] = $slot;
             $this->slotsinorder[$slot->slot] = $slot;
+
+            // todo: Do we really need to fetch questions now? Postpone this to when it is really required.
+            $question = $slot->get_question();
+            $this->questions[$slotdata->slot] = $question;
         }
 
         // Get quiz sections in ascending order of the firstslot.
@@ -624,7 +645,9 @@ class structure {
     protected function populate_missing_questions($slots) {
         // Address missing question types.
         foreach ($slots as $slot) {
-            if ($slot->qtype === null) {
+            if ($slot->questionid === null) {
+                // It's a "random" question.
+            } else if ($slot->qtype === null) {
                 // If the questiontype is missing change the question type.
                 $slot->id = $slot->questionid;
                 $slot->category = 0;
@@ -668,7 +691,8 @@ class structure {
     protected function populate_question_numbers() {
         $number = 1;
         foreach ($this->slots as $slot) {
-            if ($this->questions[$slot->questionid]->length == 0) {
+            if ($this->questions[$slot->slot]->length == 0) {
+                // It is a description.
                 $slot->displayednumber = get_string('infoshort', 'quiz');
             } else {
                 $slot->displayednumber = $number;
@@ -910,7 +934,7 @@ class structure {
         }
 
         quiz_update_section_firstslots($this->get_quizid(), -1, $slotnumber);
-        unset($this->questions[$slot->questionid]);
+        unset($this->questions[$slot->slot]);
 
         $this->refresh_page_numbers_and_update_db();
 
