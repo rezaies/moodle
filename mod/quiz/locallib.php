@@ -2113,7 +2113,7 @@ function quiz_update_section_firstslots($quizid, $direction, $afterslot, $before
  * @param bool $includesubcategories whether to include questoins from subcategories.
  */
 function quiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
-        $includesubcategories) {
+        $includesubcategories, $tagid = null) {
     global $DB;
 
     $category = $DB->get_record('question_categories', array('id' => $categoryid));
@@ -2124,44 +2124,19 @@ function quiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
     $catcontext = context::instance_by_id($category->contextid);
     require_capability('moodle/question:useall', $catcontext);
 
-    // Find existing random questions in this category that are
-    // not used by any quiz.
-    if ($existingquestions = $DB->get_records_sql(
-            "SELECT q.id, q.qtype FROM {question} q
-            WHERE qtype = 'random'
-                AND category = ?
-                AND " . $DB->sql_compare_text('questiontext') . " = ?
-                AND NOT EXISTS (
-                        SELECT *
-                          FROM {quiz_slots}
-                         WHERE questionid = q.id)
-            ORDER BY id", array($category->id, ($includesubcategories ? '1' : '0')))) {
-            // Take as many of these as needed.
-        while (($existingquestion = array_shift($existingquestions)) && $number > 0) {
-            quiz_add_quiz_question($existingquestion->id, $quiz, $addonpage);
-            $number -= 1;
-        }
+    if ($tagid) {
+        // ToDo: validate tagid here.
     }
 
-    if ($number <= 0) {
-        return;
-    }
+    for ($i = 0; $i < $number; $i++) {
+        $randomslot = new \mod_quiz\local\structure\slot_random();
+        $randomslot->set_quiz($quiz);
+        $randomslot->questioncategoryid = $categoryid;
+        $randomslot->includingsubcategories = $includesubcategories ? 1 : 0;
+        $randomslot->tagid = $tagid;
+        $randomslot->maxmark = 1;
 
-    // More random questions are needed, create them.
-    for ($i = 0; $i < $number; $i += 1) {
-        $form = new stdClass();
-        $form->questiontext = array('text' => ($includesubcategories ? '1' : '0'), 'format' => 0);
-        $form->category = $category->id . ',' . $category->contextid;
-        $form->defaultmark = 1;
-        $form->hidden = 1;
-        $form->stamp = make_unique_id_code(); // Set the unique code (not to be changed).
-        $question = new stdClass();
-        $question->qtype = 'random';
-        $question = question_bank::get_qtype('random')->save_question($question, $form);
-        if (!isset($question->id)) {
-            print_error('cannotinsertrandomquestion', 'quiz');
-        }
-        quiz_add_quiz_question($question->id, $quiz, $addonpage);
+        $randomslot->insert($addonpage);
     }
 }
 
