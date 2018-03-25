@@ -3143,4 +3143,107 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
         // Check that submissionstatus_marked 'Graded' message does appear for student.
         $this->assertContains(get_string('submissionstatus_marked', 'assign'), $output2);
     }
+
+    public function test_update_grade() {
+        // Set up the assignments.
+        $this->setUser($this->editingteachers[0]);
+        $assign1 = $this->create_instance();
+        $assign2 = $this->create_instance(array(
+            'attemptreopenmethod' => 'untilpass',
+            'gradepass'           => 60,
+        ));
+
+        $studentid = $this->students[0]->id;
+
+        // Add a submission for assignment1.
+        $this->setUser($this->students[0]);
+        $submission1 = $assign1->get_user_submission($studentid, true);
+        $data = new stdClass();
+        $data->onlinetext_editor = array(
+            'itemid' => file_get_unused_draft_itemid(),
+            'text'   => 'Submission text',
+            'format' => FORMAT_MOODLE
+        );
+        $plugin = $assign1->get_submission_plugin_by_type('onlinetext');
+        $plugin->save($submission1, $data);
+
+        // And now submit it for marking.
+        $submission1->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $assign1->testable_update_submission($submission1, $studentid, true, false);
+
+        // Mark the submission.
+        $this->setUser($this->editingteachers[0]);
+        $data = new stdClass();
+        $data->grade = '30.0';
+        $assign1->testable_apply_grade_to_user($data, $studentid, 0);
+
+        // Update user's grade.
+        $usergrade = $assign1->get_user_grade($studentid, false, 0);
+        $usergrade->grade = 40;
+        $assign1->update_grade($usergrade);
+
+        // Check the submission's grade.
+        $grade = $assign1->get_user_grade($studentid, false, 0);
+        $this->assertEquals(40, $grade->grade);
+
+        // Check the grade in grade book.
+        $gradeitem = $assign1->get_grade_item();
+        $grade = $gradeitem->get_grade($studentid, false);
+        $this->assertEquals(40, $grade->rawgrade);
+
+        // Now, add a submission for assignment2.
+        $submission2 = $assign2->get_user_submission($studentid, true);
+        $data2 = new stdClass();
+        $data2->onlinetext_editor = array(
+            'itemid' => file_get_unused_draft_itemid(),
+            'text'   => 'Submission text',
+            'format' => FORMAT_MOODLE
+        );
+        $plugin = $assign2->get_submission_plugin_by_type('onlinetext');
+        $plugin->save($submission2, $data2);
+
+        // And now submit it for marking.
+        $submission2->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+        $assign2->testable_update_submission($submission2, $studentid, true, false);
+
+        // Mark the submission (fail the student).
+        $this->setUser($this->editingteachers[0]);
+        $data = new stdClass();
+        $data->grade = '30.0';
+        $assign2->testable_apply_grade_to_user($data, $studentid, 0);
+
+        // Update user's grade.
+        $usergrade = $assign2->get_user_grade($studentid, false, 0);
+        $usergrade->grade = 40;
+        $assign2->update_grade($usergrade);
+
+        // Check the submission's grade.
+        $grade = $assign2->get_user_grade($studentid, false, 0);
+        $this->assertEquals(40, $grade->grade);
+
+        // Check the grade in grade book.
+        $gradeitem = $assign2->get_grade_item();
+        $grade = $gradeitem->get_grade($studentid, false);
+        $this->assertEquals(40, $grade->rawgrade);
+    }
+
+    public function test_get_user_recent_graded_attemptnumber() {
+        $this->setUser($this->editingteachers[0]);
+        $assign = $this->create_instance();
+
+        $studentid = $this->students[0]->id;
+
+        // Simulate adding a grade.
+        $data = new stdClass();
+        $data->grade = '50.0';
+        $assign->testable_apply_grade_to_user($data, $studentid, 0);
+
+        $attemptnum = $assign->get_user_recent_graded_attemptnumber($studentid);
+        $this->assertEquals(0, $attemptnum);
+
+        $assign->testable_apply_grade_to_user($data, $studentid, 1);
+
+        $attemptnum = $assign->get_user_recent_graded_attemptnumber($studentid);
+        $this->assertEquals(1, $attemptnum);
+    }
 }
