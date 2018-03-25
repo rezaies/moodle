@@ -171,8 +171,7 @@ class assign {
     private $sharedgroupmembers = array();
 
     /**
-     * @var stdClass The most recent team submission. Used to determine additional attempt numbers and whether
-     * to update the gradebook.
+     * @var stdClass The most recent team submission. Used to determine additional attempt numbers.
      */
     private $mostrecentteamsubmission = null;
 
@@ -2630,8 +2629,9 @@ class assign {
             $submission = $this->get_user_submission($grade->userid, false);
         }
 
-        // Only push to gradebook if the update is for the most recent attempt.
-        if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+        $gradedattemptnumber = $this->get_user_recent_graded_attemptnumber($grade->userid);
+        // Only push to gradebook if the update is for the most recent graded attempt.
+        if ($gradedattemptnumber != $grade->attemptnumber) {
             return true;
         }
 
@@ -2640,7 +2640,7 @@ class assign {
         }
 
         // If the conditions are met, allow another attempt.
-        if ($submission) {
+        if ($submission && $submission->attemptnumber == $grade->attemptnumber) {
             $this->reopen_submission_if_required($grade->userid,
                     $submission,
                     $reopenattempt);
@@ -3599,6 +3599,29 @@ class assign {
             return $DB->get_record('assign_submission', array('id' => $sid));
         }
         return false;
+    }
+
+    /**
+     * Returns the attemptnumber of the most recent assignment submission that has a grade.
+     *
+     * @param int $userid The id of the user whose submission we want or 0 in which case USER->id is used.
+     * @return int|bool The attemptnumber, or false if not found.
+     */
+    public function get_user_recent_graded_attemptnumber($userid = 0) {
+        global $DB, $USER;
+
+        if (!$userid) {
+            $userid = $USER->id;
+        }
+
+        $params = array('assignment' => $this->get_instance()->id, 'userid' => $userid);
+        $attemptnumber = $DB->get_field_sql('SELECT MAX(g.attemptnumber)
+                                               FROM {assign_grades} g
+                                              WHERE g.grade >= 0
+                                                    AND g.assignment = :assignment
+                                                    AND g.userid = :userid', $params);
+
+        return $attemptnumber;
     }
 
     /**
