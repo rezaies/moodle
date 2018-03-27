@@ -198,6 +198,27 @@ class mod_assign_base_testcase extends advanced_testcase {
     }
 
     /**
+     * Helper function to create a new assignment submission and optionally submit that.
+     *
+     * @param testable_assign $assign
+     * @param int $userid
+     * @param stdClass $data
+     * @param string $type The submission plugin.
+     * @param bool $submit Whether to submit the submission as well.
+     */
+    public function add_submission($assign, $userid, $data, $type, $submit = true) {
+        $submission = $assign->get_user_submission($userid, true);
+
+        if ($submit) {
+            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
+            $assign->testable_update_submission($submission, $userid, true, false);
+        }
+
+        $plugin = $assign->get_submission_plugin_by_type($type);
+        $plugin->save($submission, $data);
+    }
+
+    /**
      * Convenience function to create a testable instance of an assignment.
      *
      * @param array $params Array of parameters to pass to the generator
