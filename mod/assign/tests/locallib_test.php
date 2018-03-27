@@ -204,7 +204,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
 
         // Verify output.
         $this->setUser($this->editingteachers[0]);
@@ -255,7 +255,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
         $submittedtime = time();
 
         // Verify output.
@@ -468,7 +468,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
 
         // Now try and delete.
         $this->assertEquals(true, $assign->delete_instance());
@@ -494,7 +494,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
 
         $this->assertEquals(true, $assign->has_submissions_or_grades());
         // Now try and reset.
@@ -669,7 +669,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
         // Test you can see the submit button for an online text assignment with a submission.
         $output = $assign->view_student_summary($this->students[0], true);
         $this->assertContains(get_string('submitassignment', 'assign'), $output, 'Can submit non empty onlinetext assignment');
@@ -1813,7 +1813,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext');
 
         // Verify the student cannot make changes to the submission.
         $output = $assign->view_student_summary($this->students[0], true);
@@ -2295,7 +2295,7 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $data->onlinetext_editor = array('itemid'=>file_get_unused_draft_itemid(),
                                          'text'=>'Submission text',
                                          'format'=>FORMAT_MOODLE);
-        static::helper_add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
+        $this->add_submission($assign, $this->students[0]->id, $data, 'onlinetext', false);
 
         // Create another instance with cut-off and due-date already passed.
         $this->setUser($this->editingteachers[0]);
@@ -3141,7 +3141,7 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
                     'text' => 'Submission text',
                     'format' => FORMAT_MOODLE
             );
-            static::helper_add_submission($assign, $studentid, $data, 'onlinetext');
+            $this->add_submission($assign, $studentid, $data, 'onlinetext');
 
             // Mark the submission.
             $this->setUser($this->editingteachers[0]);
@@ -3183,26 +3183,5 @@ Anchor link 2:<a title=\"bananas\" href=\"../logo-240x60.gif\">Link text</a>
 
         $attemptnum = $assign->get_user_recent_graded_attemptnumber($studentid);
         $this->assertEquals(1, $attemptnum);
-    }
-
-    /**
-     * Helper function to create a new assignment submission and optionally submit that.
-     *
-     * @param testable_assign $assign
-     * @param int $userid
-     * @param stdClass $data
-     * @param string $type The submission plugin.
-     * @param bool $submit Whether to submit the submission as well.
-     */
-    public function helper_add_submission($assign, $userid, $data, $type, $submit = true) {
-        $submission = $assign->get_user_submission($userid, true);
-
-        if ($submit) {
-            $submission->status = ASSIGN_SUBMISSION_STATUS_SUBMITTED;
-            $assign->testable_update_submission($submission, $userid, true, false);
-        }
-
-        $plugin = $assign->get_submission_plugin_by_type($type);
-        $plugin->save($submission, $data);
     }
 }
