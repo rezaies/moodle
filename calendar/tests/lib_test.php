@@ -777,4 +777,82 @@ class core_calendar_lib_testcase extends advanced_testcase {
 
         $this->assertEquals($event->id, $data->events[0]->id);
     }
+
+    /**
+     * This function tests calendar_set_filters.
+     */
+    public function test_calendar_set_filters() {
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+        $user1 = $generator->create_user();
+        $user2 = $generator->create_user();
+        $user3 = $generator->create_user();
+
+        $course1 = $generator->create_course();
+        $course1group1 = $generator->create_group(['courseid' => $course1->id]);
+        $course1group2 = $generator->create_group(['courseid' => $course1->id]);
+        $generator->enrol_user($user1->id, $course1->id, 'student');
+        $generator->create_group_member(['groupid' => $course1group1->id, 'userid' => $user1->id]);
+        $generator->enrol_user($user2->id, $course1->id, 'student');
+        $generator->create_group_member(['groupid' => $course1group2->id, 'userid' => $user2->id]);
+
+        $course2 = $generator->create_course();
+        $generator->enrol_user($user1->id, $course2->id, 'student');
+
+        $course3 = $generator->create_course();
+        $course3group1 = $generator->create_group(['courseid' => $course3->id]);
+        $course3group2 = $generator->create_group(['courseid' => $course3->id]);
+        $generator->enrol_user($user1->id, $course3->id, 'student');
+
+        $course4 = $generator->create_course();
+        $course4group1 = $generator->create_group(['courseid' => $course4->id]);
+        $course4group2 = $generator->create_group(['courseid' => $course4->id]);
+
+        // When not logged in.
+        $courses = calendar_get_default_courses(null, '*', false, $user1->id);
+        list($courseids, $groupids, $userid) = calendar_set_filters($courses);
+        $this->assertEmpty(array_merge(
+                array_diff([$course1->id, $course2->id, $course3->id, SITEID], array_values($courseids)),
+                array_diff(array_values($courseids), [$course1->id, $course2->id, $course3->id, SITEID])
+        ));
+        $this->assertFalse($groupids);
+        $this->assertFalse($userid);
+
+        // When not logged in, but a user is passed.
+        $courses = calendar_get_default_courses(null, '*', false, $user2->id);
+        list($courseids, $groupids, $userid) = calendar_set_filters($courses, false, $user2);
+        $this->assertEquals(array($course1->id, SITEID), array_values($courseids));
+        $this->assertEquals(array($course1group2->id), $groupids);
+        $this->assertEquals($user2->id, $userid);
+
+        // When not logged in, but a user id is passed.
+        $courses = calendar_get_default_courses(null, '*', false, $user1->id);
+        list($courseids, $groupids, $userid) = calendar_set_filters($courses, false, $user1->id);
+        $this->assertEmpty(array_merge(
+                array_diff([$course1->id, $course2->id, $course3->id, SITEID], array_values($courseids)),
+                array_diff(array_values($courseids), [$course1->id, $course2->id, $course3->id, SITEID])
+        ));
+        $this->assertEquals(array($course1group1->id), $groupids);
+        $this->assertEquals($user1->id, $userid);
+
+        // When logged in and no user is passed.
+        $this->setUser($user1);
+        $courses = calendar_get_default_courses(null, '*', false, $user1->id);
+        list($courseids, $groupids, $userid) = calendar_set_filters($courses, false);
+        $this->assertEmpty(array_merge(
+                array_diff([$course1->id, $course2->id, $course3->id, SITEID], array_values($courseids)),
+                array_diff(array_values($courseids), [$course1->id, $course2->id, $course3->id, SITEID])
+        ));
+        $this->assertEquals(array($course1group1->id), $groupids);
+        $this->assertEquals($user1->id, $userid);
+
+        // When logged in, but another user is passed.
+        $this->setUser($user1);
+        $courses = calendar_get_default_courses(null, '*', false, $user2->id);
+        list($courseids, $groupids, $userid) = calendar_set_filters($courses, false, $user2);
+        $this->assertEquals(array($course1->id, SITEID), array_values($courseids));
+        $this->assertEquals(array($course1group2->id), $groupids);
+        $this->assertEquals($user2->id, $userid);
+    }
 }
