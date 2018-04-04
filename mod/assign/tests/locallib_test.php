@@ -1327,6 +1327,11 @@ class mod_assign_locallib_testcase extends mod_assign_base_testcase {
         $this->setUser($this->teachers[0]);
         $this->assertEquals(true, $assign->can_grade());
 
+        // Test the viewgrades capability for other users.
+        $this->setUser();
+        $this->assertTrue($assign->can_grade($this->editingteachers[0]->id));
+        $this->assertFalse($assign->can_grade($this->students[0]->id));
+
         // Test the viewgrades capability - without mod/assign:grade.
         $this->setUser($this->students[0]);
         $studentrole = $DB->get_record('role', array('shortname' => 'student'));
