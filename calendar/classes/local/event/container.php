@@ -82,6 +82,11 @@ class container {
     protected static $modulecache = array();
 
     /**
+     * @var int The beneficiary user. All capability checks are done against this user.
+     */
+    protected static $beneficiaryuserid;
+
+    /**
      * Initialises the dependency graph if it hasn't yet been.
      */
     private static function init() {
@@ -117,11 +122,13 @@ class container {
                 [self::class, 'apply_component_provide_event_action'],
                 [self::class, 'apply_component_is_event_visible'],
                 function ($dbrow) {
+                    $beneficiaryuserid = self::get_beneficiary_user();
+
                     if (!empty($dbrow->categoryid)) {
                         // This is a category event. Check that the category is visible to this user.
-                        $category = \coursecat::get($dbrow->categoryid, IGNORE_MISSING, true);
+                        $category = \coursecat::get($dbrow->categoryid, IGNORE_MISSING, true, $beneficiaryuserid);
 
-                        if (empty($category) || !$category->is_uservisible()) {
+                        if (empty($category) || !$category->is_uservisible($beneficiaryuserid)) {
                             return true;
                         }
                     }
@@ -131,7 +138,7 @@ class container {
                         return false;
                     }
 
-                    $instances = get_fast_modinfo($dbrow->courseid)->instances;
+                    $instances = get_fast_modinfo($dbrow->courseid, $beneficiaryuserid)->instances;
 
                     // If modinfo doesn't know about the module, we should ignore it.
                     if (!isset($instances[$dbrow->modulename]) || !isset($instances[$dbrow->modulename][$dbrow->instance])) {
@@ -156,11 +163,13 @@ class container {
                     }
 
                     $coursecontext = \context_course::instance($dbrow->courseid);
-                    if (!$cm->get_course()->visible && !has_capability('moodle/course:viewhiddencourses', $coursecontext)) {
+                    if (!$cm->get_course()->visible &&
+                            !has_capability('moodle/course:viewhiddencourses', $coursecontext, $beneficiaryuserid)) {
                         return true;
                     }
 
-                    if (!has_capability('moodle/course:view', $coursecontext) && !is_enrolled($coursecontext)) {
+                    if (!has_capability('moodle/course:view', $coursecontext, $beneficiaryuserid) &&
+                            !is_enrolled($coursecontext, $beneficiaryuserid)) {
                         return true;
                     }
 
@@ -191,6 +200,7 @@ class container {
      * Reset all static caches, called between tests.
      */
     public static function reset_caches() {
+        self::$beneficiaryuserid = null;
         self::$eventfactory = null;
         self::$eventmapper = null;
         self::$eventvault = null;
@@ -231,6 +241,31 @@ class container {
     }
 
     /**
+     * Sets the beneficiary user so that all capability checks are done against this user.
+     * Setting the beneficiary user (hence calling this function) is optional and if you do not so,
+     * $USER will be used as the beneficiary user. However, if you wish to set the beneficiary user yourself,
+     * you should call this function before any other function of the container class is called.
+     *
+     * @param int $userid The user id.
+     * @throws \coding_exception
+     */
+    public static function set_beneficiary_user($userid) {
+        self::$beneficiaryuserid = $userid;
+    }
+
+    /**
+     * Returns the beneficiary user id.
+     * It usually is the current user unless it has been set explicitly using set_beneficiary_user.
+     *
+     * @return int
+     */
+    public static function get_beneficiary_user() {
+        global $USER;
+
+        return empty(self::$beneficiaryuserid) ? $USER->id : self::$beneficiaryuserid;
+    }
+
+    /**
      * Calls callback 'core_calendar_provide_event_action' from the component responsible for the event
      *
      * If no callback is present or callback returns null, there is no action on the event
@@ -245,14 +280,23 @@ class container {
         $mapper = self::$eventmapper;
         $action = null;
         if ($event->get_course_module()) {
+            $beneficiaryuserid = self::get_beneficiary_user();
+            $legacyevent = $mapper->from_event_to_legacy_event($event);
+            // We know for a fact that the the beneficiary user might be different from the logged in user,
+            // but the event mapper is not aware of that.
+            if (empty($event->user) && !empty($legacyevent->userid)) {
+                $legacyevent->userid = $beneficiaryuserid;
+            }
+
             // TODO MDL-58866 Only activity modules currently support this callback.
             // Any other event will not be displayed on the dashboard.
             $action = component_callback(
                 'mod_' . $event->get_course_module()->get('modname'),
                 'core_calendar_provide_event_action',
                 [
-                    $mapper->from_event_to_legacy_event($event),
-                    self::$actionfactory
+                    $legacyevent,
+                    self::$actionfactory,
+                    $beneficiaryuserid
                 ]
             );
         }
@@ -279,12 +323,21 @@ class container {
         $mapper = self::$eventmapper;
         $eventvisible = null;
         if ($event->get_course_module()) {
+            $beneficiaryuserid = self::get_beneficiary_user();
+            $legacyevent = $mapper->from_event_to_legacy_event($event);
+            // We know for a fact that the the beneficiary user might be different from the logged in user,
+            // but the event mapper is not aware of that.
+            if (empty($event->user) && !empty($legacyevent->userid)) {
+                $legacyevent->userid = $beneficiaryuserid;
+            }
+
             // TODO MDL-58866 Only activity modules currently support this callback.
             $eventvisible = component_callback(
                 'mod_' . $event->get_course_module()->get('modname'),
                 'core_calendar_is_event_visible',
                 [
-                    $mapper->from_event_to_legacy_event($event)
+                    $legacyevent,
+                    $beneficiaryuserid
                 ]
             );
         }
