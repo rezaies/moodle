@@ -81,6 +81,9 @@ class mod_forum_generator extends testing_module_generator {
         if (!isset($record->forcesubscribe)) {
             $record->forcesubscribe = FORUM_CHOOSESUBSCRIBE;
         }
+        if (!isset($record->duedate)) {
+            $record->duedate = 0;
+        }
 
         return parent::create_instance($record, (array)$options);
     }
