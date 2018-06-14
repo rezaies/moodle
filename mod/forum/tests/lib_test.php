@@ -2121,7 +2121,7 @@ class mod_forum_lib_testcase extends advanced_testcase {
      * Test forum_user_can_post_discussion
      */
     public function test_forum_user_can_post_discussion() {
-        global $CFG, $DB;
+        global $DB;
 
         $this->resetAfterTest(true);
 
@@ -2214,6 +2214,40 @@ class mod_forum_lib_testcase extends advanced_testcase {
         $forum->groupmode = NOGROUPS;
         $DB->update_record('forum', $forum);
 
+        $can = forum_user_can_post_discussion($forum, null, -1, $cm, $context);
+        $this->assertTrue($can);
+    }
+
+    /**
+     * Test forum_user_can_post_discussion_after_cutoff
+     */
+    public function test_forum_user_can_post_discussion_after_cutoff() {
+        $this->resetAfterTest(true);
+
+        // Create course to add the module.
+        $course = self::getDataGenerator()->create_course(array('groupmode' => SEPARATEGROUPS, 'groupmodeforce' => 1));
+        $student = self::getDataGenerator()->create_user();
+        $teacher = self::getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($student->id, $course->id);
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, 'editingteacher');
+
+        // Forum forcing separate gropus.
+        $record = new stdClass();
+        $record->course = $course->id;
+        $record->cutoffdate = time() - 1;
+        $forum = self::getDataGenerator()->create_module('forum', $record);
+        $cm = get_coursemodule_from_instance('forum', $forum->id);
+        $context = context_module::instance($cm->id);
+
+        self::setUser($student);
+
+        // Students usually don't have the mod/forum:canoverridecutoff capability.
+        $can = forum_user_can_post_discussion($forum, null, -1, $cm, $context);
+        $this->assertFalse($can);
+
+        self::setUser($teacher);
+
+        // Teachers usually have the mod/forum:canoverridecutoff capability.
         $can = forum_user_can_post_discussion($forum, null, -1, $cm, $context);
         $this->assertTrue($can);
     }
@@ -3048,6 +3082,48 @@ class mod_forum_lib_testcase extends advanced_testcase {
             'Locked: lockdiscussionafter is set; forum is of type eachuser; post is old' => [
                 (object) ['lockdiscussionafter' => MINSECS, 'type' => 'eachuser'],
                 (object) ['timemodified' => time() - DAYSECS],
+                true
+            ],
+        ];
+    }
+
+    /**
+     * Test the forum_is_cutoff_date_reached function.
+     *
+     * @dataProvider forum_is_cutoff_date_reached_provider
+     * @param   stdClass    $forum
+     * @param   bool        $expect
+     */
+    public function test_forum_is_cutoff_date_reached($forum, $expect) {
+        $this->assertEquals($expect, forum_is_cutoff_date_reached($forum));
+    }
+
+    /**
+     * Dataprovider for forum_is_cutoff_date_reached tests.
+     *
+     * @return  array
+     */
+    public function forum_is_cutoff_date_reached_provider() {
+        $now = time();
+        return [
+            'Unlocked: cutoffdate is unset' => [
+                (object) [],
+                false
+            ],
+            'Unlocked: cutoffdate is 0' => [
+                (object) ['cutoffdate' => 0],
+                false
+            ],
+            'Unlocked: cutoffdate is null' => [
+                (object) ['cutoffdate' => null],
+                false
+            ],
+            'Unlocked: cutoffdate is set and is in future' => [
+                (object) ['cutoffdate' => $now + 86400],
+                false
+            ],
+            'Unlocked: cutoffdate is set and is in past' => [
+                (object) ['cutoffdate' => $now - 86400],
                 true
             ],
         ];

@@ -372,6 +372,13 @@ if (has_capability('mod/forum:pindiscussions', $modcontext)) {
 
 echo "</div></div>";
 
+if (forum_is_cutoff_date_reached($forum)) {
+    echo $OUTPUT->notification(get_string('cutoffdatereached', 'forum'), \core\output\notification::NOTIFY_INFO);
+} else if (!empty($forum->duedate)) {
+    echo $OUTPUT->notification(get_string('thisforumhasduedate', 'forum', userdate($forum->duedate)),
+            \core\output\notification::NOTIFY_INFO);
+}
+
 if (forum_discussion_is_locked($forum, $discussion)) {
     echo $OUTPUT->notification(get_string('discussionlocked', 'forum'),
         \core\output\notification::NOTIFY_INFO . ' discussionlocked');

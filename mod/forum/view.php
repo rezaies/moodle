@@ -152,6 +152,13 @@
         }
     }
 
+    if (forum_is_cutoff_date_reached($forum)) {
+        echo $OUTPUT->notification(get_string('cutoffdatereached', 'forum'), \core\output\notification::NOTIFY_INFO);
+    } else if (!empty($forum->duedate)) {
+        echo $OUTPUT->notification(get_string('thisforumhasduedate', 'forum', userdate($forum->duedate)),
+                \core\output\notification::NOTIFY_INFO);
+    }
+
     if (!empty($forum->blockafter) && !empty($forum->blockperiod)) {
         $a = new stdClass();
         $a->blockafter = $forum->blockafter;
