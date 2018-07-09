@@ -106,7 +106,7 @@ function xmldb_quiz_upgrade($oldversion) {
         }
 
         // Define key questioncategoryid (foreign) to be added to quiz_slots.
-        $key = new xmldb_key('questioncategoryid', XMLDB_KEY_FOREIGN, array('questioncategoryid'), 'questioncategory', array('id'));
+        $key = new xmldb_key('questioncategoryid', XMLDB_KEY_FOREIGN, array('questioncategoryid'), 'question_categories', ['id']);
         // Launch add key questioncategoryid.
         $dbman->add_key($table, $key);
 
@@ -198,6 +198,22 @@ function xmldb_quiz_upgrade($oldversion) {
 
     // Automatically generated Moodle v3.5.0 release upgrade line.
     // Put any upgrade step following this.
+
+    if ($oldversion < 2018051401) {
+        // Define key questioncategoryid (foreign) to be dropped form quiz_slots and added to that again.
+        // The reason for doing this is that questioncategoryid had wrong reftable name.
+        $table = new xmldb_table('quiz_slots');
+        $key = new xmldb_key('questioncategoryid', XMLDB_KEY_FOREIGN, ['questioncategoryid'], 'question_categories', ['id']);
+
+        // Launch drop key questioncategoryid.
+        $dbman->drop_key($table, $key);
+
+        // Launch add key questioncategoryid.
+        $dbman->add_key($table, $key);
+
+        // Quiz savepoint reached.
+        upgrade_mod_savepoint(true, 2018051401, 'quiz');
+    }
 
     return true;
 }
