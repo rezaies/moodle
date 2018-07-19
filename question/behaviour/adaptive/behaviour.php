@@ -144,7 +144,8 @@ class qbehaviour_adaptive extends question_behaviour_with_multiple_tries {
             $prevbest = 0;
         }
 
-        if ($this->question->is_same_response($response, $prevresponse)) {
+        if ($this->question->is_same_response($response, $prevresponse) &&
+                $this->is_complete_response($this->qa->get_last_step())) {
             return question_attempt::DISCARD;
         }
 
