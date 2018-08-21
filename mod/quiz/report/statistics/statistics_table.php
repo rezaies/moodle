@@ -139,6 +139,9 @@ class quiz_statistics_table extends flexible_table {
      * @return string contents of this table cell.
      */
     protected function col_number($questionstat) {
+        if ($this->is_random_question_summary($questionstat)) {
+            return '';
+        }
         if (!isset($questionstat->question->number)) {
             return '';
         }
@@ -244,9 +247,7 @@ class quiz_statistics_table extends flexible_table {
                         // analysis page with specific text to clearly indicate the link to the user.
                         // Random question rows will render the name without a link to improve clarity
                         // in the UI.
-                        $name = html_writer::link($url,
-                                                  get_string('viewdisplayedquestions', 'quiz_statistics'),
-                                                  array('title' => get_string('slotstructureanalysis', 'quiz_statistics', $number)));
+                        $name = html_writer::link($url, get_string('viewanalysis', 'quiz_statistics'));
                     }
                 } else if ($questionstat->get_variants() || $questionstat->get_sub_question_ids()) {
                     // Question can be broken down into sub-questions or variants. Link will show structural analysis page.

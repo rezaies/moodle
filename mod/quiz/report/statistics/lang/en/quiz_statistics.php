@@ -115,5 +115,5 @@ $string['statisticsreportgraph'] = 'Statistics for question positions';
 $string['statistics:view'] = 'View statistics report';
 $string['statsfor'] = 'Quiz statistics (for {$a})';
 $string['variant'] = 'Variant';
-$string['viewdisplayedquestions'] = 'View displayed questions';
+$string['viewanalysis'] = 'View analysis of these questions';
 $string['whichtries'] = 'Analyze responses for';
