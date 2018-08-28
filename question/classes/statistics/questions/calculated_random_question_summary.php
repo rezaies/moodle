@@ -45,11 +45,140 @@ class calculated_random_question_summary extends calculated {
     public $subqdisplayorder;
 
     /**
+     * @var calculated[] The instances storing the calculated stats of the questions that are being summarised.
+     */
+    protected $subqstats;
+
+    /**
+     * calculated_random_question_summary constructor.
+     *
+     * @param \stdClass $question
+     * @param int $slot
+     * @param calculated[] $subqstats The instances of the calculated stats of the questions that are being summarised.
+     */
+    public function __construct($question, $slot, $subqstats) {
+        parent::__construct($question, $slot);
+
+        $this->subqstats = $subqstats;
+        $this->subquestions = implode(',', array_column($subqstats, 'questionid'));
+    }
+
+    /**
      * This is a summary stat so never breakdown by variant.
      *
      * @return bool
      */
     public function break_down_by_variant() {
         return false;
+    }
+
+    /**
+     * Returns the minimum and maximum values of the given attribute in the summarised calculated stats.
+     *
+     * @param string $attribute The attribute that we are looking for its extremums.
+     * @return array An array of [min,max]
+     */
+    public function get_min_max_of($attribute) {
+        $getmethod = 'get_min_max_of_' . $attribute;
+        if (method_exists($this, $getmethod)) {
+            return $this->$getmethod();
+        } else {
+            $min = $max = null;
+            $set = false;
+
+            // We cannot simply use min or max functions because, in theory, some attributes might be non-scalar.
+            foreach (array_column($this->subqstats, $attribute) as $value) {
+                if (is_scalar($value) || is_null($value)) {
+                    if (!$set) {    // It is not good enough to check if (!isset($min)),
+                                    // because $min might have been set to null in an earlier iteration.
+                        $min = $value;
+                        $max = $value;
+                        $set = true;
+                    }
+
+                    $min  = $this->min($min, $value);
+                    $max  = $this->max($max, $value);
+                }
+            }
+
+            return [$min, $max];
+        }
+    }
+
+    /**
+     * Returns the minimum and maximum values of the standard deviation in the summarised calculated stats.
+     * @return array An array of [min,max]
+     */
+    protected function get_min_max_of_sd() {
+        $min = $max = null;
+        $set = false;
+
+        foreach ($this->subqstats as $subqstat) {
+            if (isset($subqstat->sd) && $subqstat->maxmark) {
+                $value = $subqstat->sd / $subqstat->maxmark;
+            } else {
+                $value = null;
+            }
+
+            if (!$set) {    // It is not good enough to check if (!isset($min)),
+                            // because $min might have been set to null in an earlier iteration.
+                $min = $value;
+                $max = $value;
+                $set = true;
+            }
+
+            $min = $this->min($min, $value);
+            $max = $this->max($max, $value);
+        }
+
+        return [$min, $max];
+    }
+
+    /**
+     * Find higher value.
+     * A zero value is almost considered equal to zero in comparisons. The only difference is that when being compared to zero,
+     * zero is higher than null.
+     *
+     * @param float|null $value1
+     * @param float|null $value2
+     * @return float|null
+     */
+    protected function max(float $value1 = null, float $value2 = null) {
+        $temp1 = $value1 ?: 0;
+        $temp2 = $value2 ?: 0;
+
+        $tempmax = max($temp1, $temp2);
+
+        if (!$tempmax && $value1 !== 0 && $value2 !== 0) {
+            $max = null;
+        } else {
+            $max = $tempmax;
+        }
+
+        return $max;
+    }
+
+    /**
+     * Find lower value.
+     * A zero value is almost considered equal to zero in comparisons. The only difference is that when being compared to zero,
+     * zero is lower than null.
+     *
+     * @param float|null $value1
+     * @param float|null $value2
+     * @return mixed|null
+     */
+    protected function min(float $value1 = null, float $value2 = null) {
+        $temp1 = $value1 ?: 0;
+        $temp2 = $value2 ?: 0;
+
+        $tempmin = min($temp1, $temp2);
+
+        if (!$tempmin && $value1 !== 0 && $value2 !== 0) {
+            $min = null;
+        } else {
+            $min = $tempmin;
+        }
+
+        return $min;
     }
 }
