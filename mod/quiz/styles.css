@@ -614,6 +614,11 @@ table.quizreviewsummary td.cell {
     border-bottom: lightgrey solid 0.2em;
 }
 
+#page-mod-quiz-report .summaryrow td {
+    border-top: 1px solid;
+    vertical-align: top;
+}
+
 /** Mod quiz edit **/
 #page-mod-quiz-edit .statusbar {
     margin: 0.6em 0.4em;

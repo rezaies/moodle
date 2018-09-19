@@ -147,6 +147,20 @@ class quiz_statistics_table extends flexible_table {
         }
     }
 
+    public function format_and_add_array_of_rows($rowstoadd, $finish = true) {
+        foreach ($rowstoadd as $row) {
+            if (is_null($row)) {
+                $this->add_separator();
+            } else {
+                $classname = $this->is_calculated_question_summary($row) ? 'summaryrow' : '';
+                $this->add_data_keyed($this->format_row($row), $classname);
+            }
+        }
+        if ($finish) {
+            $this->finish_output(!$this->is_downloading());
+        }
+    }
+
     /**
      * The question number.
      * @param \core_question\statistics\questions\calculated $questionstat stats for the question.
@@ -261,7 +275,7 @@ class quiz_statistics_table extends flexible_table {
                     // analysis page with specific text to clearly indicate the link to the user.
                     // Random and variant question rows will render the name without a link to improve clarity
                     // in the UI.
-                    $name = html_writer::link($url, get_string('viewanalysis', 'quiz_statistics'));
+                    $name = html_writer::div(get_string('rangeofvalues', 'quiz_statistics'));
                 } else if (!$israndomquestion && !$questionstat->get_variants() && !$questionstat->get_sub_question_ids()) {
                     // Question cannot be broken down into sub-questions or variants. Link will show response analysis page.
                     $name = html_writer::link($url,
@@ -276,7 +290,9 @@ class quiz_statistics_table extends flexible_table {
             $name = html_writer::tag('div', $name, array('class' => 'dubious'));
         }
 
-        if (!empty($questionstat->minmedianmaxnotice)) {
+        if ($this->is_calculated_question_summary($questionstat)) {
+            $name .= html_writer::link($url, get_string('viewanalysis', 'quiz_statistics'));
+        } else if (!empty($questionstat->minmedianmaxnotice)) {
             $name = get_string($questionstat->minmedianmaxnotice, 'quiz_statistics') . '<br />' . $name;
         }
 
