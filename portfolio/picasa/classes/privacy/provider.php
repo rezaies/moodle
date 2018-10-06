@@ -18,6 +18,7 @@
  * Privacy class for requesting user data.
  *
  * @package    portfolio_picasa
+ * @category   privacy
  * @copyright  2018 Jake Dallimore <jrhdallimore@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,6 +27,8 @@ namespace portfolio_picasa\privacy;
 defined('MOODLE_INTERNAL') || die();
 
 use core_privacy\local\metadata\collection;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\userlist;
 
 /**
  * Provider for the portfolio_picasa plugin.
@@ -37,7 +40,8 @@ class provider implements
         // This portfolio plugin does not store any data itself.
         // It has no database tables, and it purely acts as a conduit, sending data externally.
         \core_privacy\local\metadata\provider,
-        \core_portfolio\privacy\portfolio_provider {
+        \core_portfolio\privacy\portfolio_provider,
+        \core_privacy\local\request\core_userlist_provider {
 
     /**
      * Returns meta data about this system.
@@ -76,5 +80,21 @@ class provider implements
      * @param  \context $context The context to refine the deletion.
      */
     public static function delete_portfolio_for_user(int $userid, \context $context) {
+    }
+
+    /**
+     * Get the list of users who have data within a context.
+     *
+     * @param   userlist    $userlist   The userlist containing the list of users who have data in this context/plugin combination.
+     */
+    public static function get_users_in_context(userlist $userlist) {
+    }
+
+    /**
+     * Delete multiple users within a single context.
+     *
+     * @param   approved_userlist       $userlist The approved context and user information to delete information for.
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
     }
 }
