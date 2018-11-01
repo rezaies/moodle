@@ -42,11 +42,18 @@ class qtype_multianswer extends question_type {
     }
 
     public function get_question_options($question) {
-        global $DB, $OUTPUT;
+        global $DB;
 
         // Get relevant data indexed by positionkey from the multianswers table.
         $sequence = $DB->get_field('question_multianswer', 'sequence',
-                array('question' => $question->id), MUST_EXIST);
+                array('question' => $question->id));
+
+        if (!$sequence) {
+            // If this has happened, then we have a problem.
+            // For the user to be able to edit or delete this question, we need to refrain from throwing exceptions if possible.
+            debugging("Question ID {$question->id} was missing a valid sequence.", DEBUG_DEVELOPER);
+            return false;
+        }
 
         $wrappedquestions = $DB->get_records_list('question', 'id',
                 explode(',', $sequence), 'id ASC');
