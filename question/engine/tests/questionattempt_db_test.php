@@ -166,7 +166,12 @@ class question_attempt_db_test extends data_loading_method_test_base {
         $this->assertEquals(1, $step->get_user_id());
         $this->assertEquals(array(), $step->get_all_data());
 
-        $this->assertDebuggingCalled(get_string('errorloadingquestion', 'question', $question->id));
+        $messages = array_column($this->getDebuggingMessages(), 'message');
+        $this->assertContains(
+                get_string('errorloadingquestion', 'question', $question->id),
+                $messages
+        );
+        $this->resetDebugging();
     }
 
     public function test_load_missing_question() {
