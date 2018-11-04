@@ -46,8 +46,17 @@ class qtype_essay extends question_type {
 
     public function get_question_options($question) {
         global $DB;
-        $question->options = $DB->get_record('qtype_essay_options',
-                array('questionid' => $question->id), '*', MUST_EXIST);
+
+        $question->options = $DB->get_record('qtype_essay_options', ['questionid' => $question->id]);
+
+        if ($question->options === false) {
+            // If this has happened, then we have a problem.
+            // For the user to be able to edit or delete this question, we need options.
+            debugging("Question ID {$question->id} was missing an options record. Using default.");
+
+            $question->options = $this->create_default_options($question);
+        }
+
         parent::get_question_options($question);
     }
 
@@ -173,5 +182,30 @@ class qtype_essay extends question_type {
         parent::delete_files($questionid, $contextid);
         $fs = get_file_storage();
         $fs->delete_area_files($contextid, 'qtype_essay', 'graderinfo', $questionid);
+    }
+
+    /**
+     * Create a default options object for the provided question.
+     *
+     * @param stdClass $question The question to get the options of
+     * @return object The options object.
+     */
+    protected function create_default_options($question) {
+        // Create a default question options record.
+        $options = new stdClass();
+        $options->questionid = $question->id;
+
+        $options->responseformat = 'editor';
+        $options->responserequired = 1;
+        $options->responsefieldlines = 15;
+        $options->attachments = 0;
+        $options->attachmentsrequired = 0;
+        $options->graderinfo = '';
+        $options->graderinfoformat = FORMAT_HTML;
+        $options->responsetemplate = '';
+        $options->responsetemplateformat = FORMAT_HTML;
+        $options->filetypeslist = null;
+
+        return $options;
     }
 }
