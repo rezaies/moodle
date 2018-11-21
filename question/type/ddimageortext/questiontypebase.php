@@ -49,8 +49,16 @@ class qtype_ddtoimage_base extends question_type {
     public function get_question_options($question) {
         global $DB;
         $dbprefix = 'qtype_'.$this->name();
-        $question->options = $DB->get_record($dbprefix,
-                array('questionid' => $question->id), '*', MUST_EXIST);
+        $question->options = $DB->get_record($dbprefix, ['questionid' => $question->id]);
+
+        if ($question->options === false) {
+            // If this has happened, then we have a problem.
+            // For the user to be able to edit or delete this question, we need options.
+            debugging("Question ID {$question->id} was missing an options record. Using default.");
+
+            $question->options = $this->create_default_options($question);
+        }
+
         $question->options->drags = $DB->get_records($dbprefix.'_drags',
                 array('questionid' => $question->id), 'no ASC', '*');
         $question->options->drops = $DB->get_records($dbprefix.'_drops',
@@ -200,5 +208,25 @@ class qtype_ddtoimage_base extends question_type {
         $DB->delete_records('qtype_'.$this->name().'_drags', array('questionid' => $questionid));
         $DB->delete_records('qtype_'.$this->name().'_drops', array('questionid' => $questionid));
         return parent::delete_question($questionid, $contextid);
+    }
+
+    /**
+     * Create a default options object for the provided question.
+     * You may want to override this function, as the child classes may need different default options.
+     *
+     * @param stdClass $question The question to get the options of
+     * @return object The options object.
+     */
+    protected function create_default_options($question) {
+        // Create a default question options record.
+        $options = new stdClass();
+        $options->questionid = $question->id;
+
+        $this->set_default_combined_feedback($options);
+
+        $options->shuffleanswers = 0;
+        $options->shownumcorrect = 0;
+
+        return $options;
     }
 }
