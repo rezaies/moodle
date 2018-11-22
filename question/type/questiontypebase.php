@@ -766,7 +766,7 @@ class question_type {
      *                         specific information (it is passed by reference).
      */
     public function get_question_options($question) {
-        global $CFG, $DB, $OUTPUT;
+        global $DB, $OUTPUT;
 
         if (!isset($question->options)) {
             $question->options = new stdClass();
@@ -785,6 +785,8 @@ class question_type {
             } else {
                 echo $OUTPUT->notification('Failed to load question options from the table ' .
                         $question_extension_table . ' for questionid ' . $question->id);
+                debugging('Failed to load question options from the table ' .
+                        $question_extension_table . ' for questionid ' . $question->id);
                 return false;
             }
         }
@@ -801,6 +803,8 @@ class question_type {
                     ORDER BY qa.id", array($question->id));
             if (!$question->options->answers) {
                 echo $OUTPUT->notification('Failed to load question answers from the table ' .
+                        $answerextensiontable . 'for questionid ' . $question->id);
+                debugging('Failed to load question answers from the table ' .
                         $answerextensiontable . 'for questionid ' . $question->id);
                 return false;
             }
