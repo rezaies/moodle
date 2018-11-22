@@ -42,6 +42,12 @@ class qtype_match extends question_type {
         parent::get_question_options($question);
         $question->options = $DB->get_record('qtype_match_options',
                 array('questionid' => $question->id));
+        if ($question->options === false) {
+            // If this has happened, then we have a problem.
+            debugging("Question ID {$question->id} was missing an options record.");
+
+            $question->options = $this->create_default_options($question);
+        }
         $question->options->subquestions = $DB->get_records('qtype_match_subquestions',
                 array('questionid' => $question->id), 'id ASC');
         return true;
@@ -208,5 +214,24 @@ class qtype_match extends question_type {
 
         $this->delete_files_in_combined_feedback($questionid, $contextid);
         $this->delete_files_in_hints($questionid, $contextid);
+    }
+
+    /**
+     * Create a default options object for the provided question.
+     *
+     * @param stdClass $question The question to get the options of
+     * @return object The options object.
+     */
+    protected function create_default_options($question) {
+        // Create a default question options record.
+        $options = new stdClass();
+        $options->questionid = $question->id;
+
+        $this->set_default_combined_feedback($options);
+
+        $options->shuffleanswers = 0;
+        $options->shownumcorrect = 0;
+
+        return $options;
     }
 }
