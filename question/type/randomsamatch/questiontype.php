@@ -54,8 +54,15 @@ class qtype_randomsamatch extends question_type {
     public function get_question_options($question) {
         global $DB;
         parent::get_question_options($question);
-        $question->options = $DB->get_record('qtype_randomsamatch_options',
-                array('questionid' => $question->id));
+        $question->options = $DB->get_record('qtype_randomsamatch_options', ['questionid' => $question->id]);
+
+        if ($question->options === false) {
+            // If this has happened, then we have a problem.
+            // Let's create a default options record.
+            debugging("Question ID {$question->id} was missing an options record. Using default.");
+
+            $question->options = $this->create_default_options($question);
+        }
 
         return true;
 
@@ -231,5 +238,25 @@ class qtype_randomsamatch extends question_type {
             $expout .= "    <{$extra}>" . $question->options->$extra . "</{$extra}>\n";
         }
         return $expout;
+    }
+
+    /**
+     * Create a default options object for the provided question.
+     *
+     * @param stdClass $question The question to get the options of
+     * @return object The options object.
+     */
+    protected function create_default_options($question) {
+        // Create a default question options record.
+        $options = new stdClass();
+        $options->questionid = $question->id;
+
+        $this->set_default_combined_feedback($options);
+
+        $options->choose = 2;
+        $options->subcats = 1;
+        $options->shownumcorrect = 0;
+
+        return $options;
     }
 }
