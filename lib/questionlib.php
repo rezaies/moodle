@@ -1657,19 +1657,34 @@ class context_to_string_translator{
  * @return boolean this user has the capability $cap for this question $question?
  */
 function question_has_capability_on($questionorid, $cap, $notused = -1) {
-    global $USER;
+    global $USER, $DB;
 
-    if (is_numeric($questionorid)) {
-        $question = question_bank::load_question_data((int)$questionorid);
-    } else if (is_object($questionorid)) {
+    if (is_object($questionorid)) {
         if (isset($questionorid->contextid) && isset($questionorid->createdby)) {
             $question = $questionorid;
+        } else if (isset($questionorid->id) && $questionorid->id != 0) {
+            $questionid = $questionorid->id;
+        }
+    } else if (is_numeric($questionorid)) {
+        $questionid = (int)$questionorid;
+    }
+
+    // At this point, either $question or $questionid is set.
+    if (isset($questionid)) {
+        try {
+            $question = question_bank::load_question_data($questionid);
+        } catch (Exception $e) {
+            $questiondata = $DB->get_record_sql('
+                                        SELECT q.*, qc.contextid
+                                          FROM {question} q
+                                          JOIN {question_categories} qc ON q.category = qc.id
+                                         WHERE q.id = :id', ['id' => $questionid]);
+            $question = question_bank::get_qtype('missingtype')->make_question($questiondata);
         }
 
-        if (!isset($question) && isset($questionorid->id) && $questionorid->id != 0) {
-            $question = question_bank::load_question_data($questionorid->id);
-        }
-    } else {
+    }
+
+    if (!isset($question)) {
         throw new coding_exception('$questionorid parameter needs to be an integer or an object.');
     }
 
