@@ -394,7 +394,7 @@ class question_dataset_dependent_items_form extends question_wizard_form {
 
                 } else {
                     foreach ($answers as $key => $answer) {
-                        $formdata['tolerance['.$key.']'] = $answer->tolerance;
+                        $formdata['tolerance['.$key.']'] = format_float($answer->tolerance, strlen($answer->tolerance), true, true);
                         $formdata['tolerancetype['.$key.']'] = $answer->tolerancetype;
                         $formdata['correctanswerlength['.$key.']'] = $answer->correctanswerlength;
                         $formdata['correctanswerformat['.$key.']'] = $answer->correctanswerformat;
@@ -408,7 +408,8 @@ class question_dataset_dependent_items_form extends question_wizard_form {
             $data = array();
             foreach ($this->datasetdefs as $defid => $datasetdef) {
                 if (isset($datasetdef->items[$itemnumber])) {
-                    $formdata["number[{$j}]"] = $datasetdef->items[$itemnumber]->value;
+                    $formdata["number[{$j}]"] = format_float($datasetdef->items[$itemnumber]->value,
+                            strlen($datasetdef->items[$itemnumber]->value), true, true);
                     $formdata["definition[{$j}]"] = $defid;
                     $formdata["itemid[{$j}]"] = $datasetdef->items[$itemnumber]->id;
                     $data[$datasetdef->name] = $datasetdef->items[$itemnumber]->value;
@@ -438,8 +439,8 @@ class question_dataset_dependent_items_form extends question_wizard_form {
             foreach ($this->datasetdefs as $defid => $datasetdef) {
                 if (!optional_param('updatedatasets', false, PARAM_BOOL) &&
                         !optional_param('updateanswers', false, PARAM_BOOL)) {
-                    $formdata["number[{$j}]"] = $this->qtypeobj->generate_dataset_item(
-                            $datasetdef->options);
+                    $item = $this->qtypeobj->generate_dataset_item($datasetdef->options);
+                    $formdata["number[{$j}]"] = format_float($item, strlen($item), true, true);
                 } else {
                     $formdata["number[{$j}]"] = $this->_form->getElementValue("number[{$j}]");
                 }
@@ -459,7 +460,8 @@ class question_dataset_dependent_items_form extends question_wizard_form {
             $itemnumber = $this->noofitems + 1;
             foreach ($this->datasetdefs as $defid => $datasetdef) {
                 if (isset($datasetdef->items[$itemnumber])) {
-                    $formdata["number[{$j}]"] = $datasetdef->items[$itemnumber]->value;
+                    $formdata["number[{$j}]"] = format_float($datasetdef->items[$itemnumber]->value,
+                            strlen($datasetdef->items[$itemnumber]->value), true, true);
                     $formdata["definition[{$j}]"] = $defid;
                     $formdata["itemid[{$j}]"] = $datasetdef->items[$itemnumber]->id;
                     $data[$datasetdef->name] = $datasetdef->items[$itemnumber]->value;
@@ -499,21 +501,41 @@ class question_dataset_dependent_items_form extends question_wizard_form {
         }
         $numbers = $data['number'];
         foreach ($numbers as $key => $number) {
-            if (! is_numeric($number)) {
-                if (stristr($number, ',')) {
-                    $errors['number['.$key.']'] = get_string('nocommaallowed', 'qtype_calculated');
+            if (unformat_float($number, true) === false) {
+                if (stristr($number, '0x')) {
+                    $a = new stdClass();
+                    $a->name = '';
+                    $a->value = $number;
+                    $errors['number['.$key.']'] = get_string('hexanotallowed', 'qtype_calculated', $a);
                 } else {
                     $errors['number['.$key.']'] = get_string('notvalidnumber', 'qtype_calculated');
                 }
-            } else if (stristr($number, 'x')) {
-                $a = new stdClass();
-                $a->name = '';
-                $a->value = $number;
-                $errors['number['.$key.']'] = get_string('hexanotallowed', 'qtype_calculated', $a);
-            } else if (is_nan($number)) {
-                $errors['number['.$key.']'] = get_string('notvalidnumber', 'qtype_calculated');
             }
         }
         return $errors;
+    }
+
+    public function get_data() {
+        if (!$data = parent::get_data()) {
+            return false;
+        }
+
+        foreach (array_keys($data->number) as $key) {
+            $data->number[$key] = unformat_float($data->number[$key]);
+        }
+
+        foreach (array_keys($data->calcmin) as $key) {
+            $data->calcmin[$key] = unformat_float($data->calcmin[$key]);
+        }
+
+        foreach (array_keys($data->calcmax) as $key) {
+            $data->calcmax[$key] = unformat_float($data->calcmax[$key]);
+        }
+
+        foreach (array_keys($data->tolerance) as $key) {
+            $data->tolerance[$key] = unformat_float($data->tolerance[$key]);
+        }
+
+        return $data;
     }
 }
