@@ -244,8 +244,8 @@ class qtype_calculatedsimple extends qtype_calculated {
                 get_string('calcmax', 'qtype_calculated'));
         $mform->addGroup($minmaxgrp, 'minmaxgrp',
                 get_string('minmax', 'qtype_calculated'), ' - ', false);
-        $mform->setType("calcmin[{$idx}]", PARAM_FLOAT);
-        $mform->setType("calcmax[{$idx}]", PARAM_FLOAT);
+        $mform->setType("calcmin[{$idx}]", PARAM_RAW);
+        $mform->setType("calcmax[{$idx}]", PARAM_RAW);
 
         $precisionoptions = range(0, 10);
         $mform->addElement('select', "calclength[{$idx}]",
