@@ -643,6 +643,9 @@ class qtype_numerical_answer_processor {
             $response = str_replace(',', '.', $response);
         }
 
+        // Let's do what we had to do in the first place.
+        $response = str_replace([$this->decsep, $this->thousandssep], ['.', ''], $response);
+
         $regex = '[+-]?(?:\d+(?:\\.\d*)?|\\.\d+)(?:e[-+]?\d+)?';
         if ($this->unitsbefore) {
             $regex = "/{$regex}$/";
