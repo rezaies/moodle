@@ -102,7 +102,6 @@ $string['newlocal3'] = 'a link from a new set of links that will only be used by
 $string['nextitemtoadd'] = 'Next \'Item to Add\'';
 $string['nextpage'] = 'Next page';
 $string['nocoherencequestionsdatyasetcategory'] = 'For question id {$a->qid}, the category id {$a->qcat} is not identical with the shared wild card {$a->name} category id {$a->sharedcat}. Edit the question.';
-$string['nocommaallowed'] = 'The , cannot be used, use . as in 0.013 or 1.3e-2';
 $string['nodataset'] = 'nothing - it is not a wild card';
 $string['nosharedwildcard'] = 'No shared wild card in this category';
 $string['notvalidnumber'] = 'Wild card value is not a valid number ';
