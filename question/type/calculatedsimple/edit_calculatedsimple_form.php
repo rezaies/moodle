@@ -92,13 +92,11 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                     foreach ($this->datasetdefs as $defid => $datasetdef) {
                         // First get the items in case their number does not correspond to itemcount.
                         if (isset($datasetdef->id)) {
-                            $this->datasetdefs[$defid]->items =
-                                    $this->qtypeobj->get_database_dataset_items($datasetdef->id);
-                            if ($this->datasetdefs[$defid]->items != '') {
-                                $datasetdef->itemcount = count($this->datasetdefs[$defid]->items);
-                            } else {
-                                $datasetdef->itemcount = 0;
-                            }
+                            $this->datasetdefs[$defid]->items = $this->qtypeobj->get_database_dataset_items($datasetdef->id);
+                            array_walk($this->datasetdefs[$defid]->items, function (&$item) {
+                                $item->value = format_float($item->value, strlen($item->value), true, true);
+                            });
+                            $datasetdef->itemcount = count($this->datasetdefs[$defid]->items);
                         }
                         // Get maxnumber.
                         if ($this->maxnumber == -1 || $datasetdef->itemcount < $this->maxnumber) {
@@ -147,7 +145,12 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                 if ($dummyform->answer = optional_param_array('answer', '', PARAM_NOTAGS)) {
                     // There is always at least one answer...
                     $fraction = optional_param_array('fraction', '', PARAM_FLOAT);
-                    $tolerance = optional_param_array('tolerance', '', PARAM_FLOAT);
+
+                    $tolerance = optional_param_array('tolerance', '', PARAM_RAW);
+                    array_walk($tolerance, function (&$value) {
+                        $value = unformat_float($value, true);
+                    });
+
                     $tolerancetype = optional_param_array('tolerancetype', '', PARAM_FLOAT);
                     $correctanswerlength = optional_param_array('correctanswerlength', '', PARAM_INT);
                     $correctanswerformat = optional_param_array('correctanswerformat', '', PARAM_INT);
@@ -169,10 +172,19 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                 $this->datasetdefs = array();
                 // Rebuild datasetdefs from old values.
                 if ($olddef = optional_param_array('datasetdef', '', PARAM_RAW)) {
-                    $calcmin = optional_param_array('calcmin', '', PARAM_FLOAT);
                     $calclength = optional_param_array('calclength', '', PARAM_INT);
-                    $calcmax = optional_param_array('calcmax', '', PARAM_FLOAT);
                     $oldoptions  = optional_param_array('defoptions', '', PARAM_RAW);
+
+                    $calcmin = optional_param_array('calcmin', '', PARAM_RAW);
+                    array_walk($calcmin, function (&$value) {
+                        $value = unformat_float($value, true);
+                    });
+
+                    $calcmax = optional_param_array('calcmax', '', PARAM_RAW);
+                    array_walk($calcmax, function (&$value) {
+                        $value = unformat_float($value, true);
+                    });
+
                     $newdatasetvalues = false;
                     $sizeofolddef = count($olddef);
                     for ($key = 1; $key <= $sizeofolddef; $key++) {
@@ -243,8 +255,8 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                     $datasetitem = new stdClass();
                     $datasetitem->itemnumber = $numberadded;
                     $datasetitem->id = 0;
-                    $datasetitem->value = $this->qtypeobj->generate_dataset_item(
-                            $datasetdef->options);
+                    $value = $this->qtypeobj->generate_dataset_item($datasetdef->options);
+                    $datasetitem->value = format_float($value, strlen($value), true, true);
                     $this->datasetdefs[$defid]->items[$numberadded] = $datasetitem;
                 }
             }
@@ -354,7 +366,7 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                 $j = $this->noofitems * count($this->datasetdefs);
                 for ($itemnumber = $this->noofitems; $itemnumber >= 1; $itemnumber--) {
                     $data = array();
-                    $numbererrors = array();
+                    $numbererrors = '';
                     $comment = new stdClass();
                     $comment->stranswers = array();
                     $comment->outsidelimit = false;
@@ -368,34 +380,17 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
                             $data[$datasetdef->name] = $datasetdef->items[$itemnumber]->value;
                             $this->formdata["number[{$j}]"] = $number =
                                     $datasetdef->items[$itemnumber]->value;
-                            if (! is_numeric($number)) {
-                                $a = new stdClass();
-                                $a->name = '{'.$datasetdef->name.'}';
-                                $a->value = $datasetdef->items[$itemnumber]->value;
-                                if (stristr($number, ',')) {
-                                    $this->numbererrors["number[{$j}]"] =
-                                            get_string('nocommaallowed', 'qtype_calculated');
+                            if (unformat_float($number, true) === false) {
+                                if (stristr($number, '0x')) {
+                                    $a = new stdClass();
+                                    $a->name = '{'.$datasetdef->name.'}';
+                                    $a->value = $datasetdef->items[$itemnumber]->value;
+                                    $this->numbererrors['number['.$j.']'] = get_string('hexanotallowed', 'qtype_calculated', $a);
                                     $numbererrors .= $this->numbererrors['number['.$j.']']."<br />";
-
                                 } else {
-                                    $this->numbererrors["number[{$j}]"] =
-                                            get_string('notvalidnumber', 'qtype_calculated', $a);
+                                    $this->numbererrors["number[{$j}]"] = get_string('notvalidnumber', 'qtype_calculated');
                                     $numbererrors .= $this->numbererrors['number['.$j.']']."<br />";
                                 }
-                            } else if (stristr($number, 'x')) { // Hexa will pass the test.
-                                $a = new stdClass();
-                                $a->name = '{'.$datasetdef->name.'}';
-                                $a->value = $datasetdef->items[$itemnumber]->value;
-                                $this->numbererrors['number['.$j.']'] =
-                                        get_string('hexanotallowed', 'qtype_calculated', $a);
-                                $numbererrors .= $this->numbererrors['number['.$j.']']."<br />";
-                            } else if (is_nan($number)) {
-                                $a = new stdClass();
-                                $a->name = '{'.$datasetdef->name.'}';
-                                $a->value = $datasetdef->items[$itemnumber]->value;
-                                $this->numbererrors["number[{$j}]"] =
-                                        get_string('notvalidnumber', 'qtype_calculated', $a);
-                                $numbererrors .= $this->numbererrors['number['.$j.']']."<br />";
                             }
                         }
                         $j--;
@@ -573,10 +568,6 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
 
     public function data_preprocessing($question) {
         $question = parent::data_preprocessing($question);
-        $question = $this->data_preprocessing_answers($question);
-        $question = $this->data_preprocessing_hints($question);
-        $question = $this->data_preprocessing_units($question);
-        $question = $this->data_preprocessing_unit_options($question);
 
         // This is a bit ugly, but it loads all the dataset values.
         $question = (object)((array)$question + $this->formdata);
@@ -597,19 +588,15 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
             $numbers = array();
         }
         foreach ($numbers as $key => $number) {
-            if (! is_numeric($number)) {
-                if (stristr($number, ',')) {
-                    $errors['number['.$key.']'] = get_string('nocommaallowed', 'qtype_calculated');
+            if (unformat_float($number, true) === false) {
+                if (stristr($number, '0x')) {
+                    $a = new stdClass();
+                    $a->name = '';
+                    $a->value = $number;
+                    $errors['number['.$key.']'] = get_string('hexanotallowed', 'qtype_calculated', $a);
                 } else {
                     $errors['number['.$key.']'] = get_string('notvalidnumber', 'qtype_calculated');
                 }
-            } else if (stristr($number, 'x')) {
-                $a = new stdClass();
-                $a->name = '';
-                $a->value = $number;
-                $errors['number['.$key.']'] = get_string('hexanotallowed', 'qtype_calculated', $a);
-            } else if (is_nan($number)) {
-                $errors['number['.$key.']'] = get_string('notvalidnumber', 'qtype_calculated');
             }
         }
 
@@ -618,5 +605,25 @@ class qtype_calculatedsimple_edit_form extends qtype_calculated_edit_form {
         }
 
         return $errors;
+    }
+
+    public function get_data() {
+        if (!$data = parent::get_data()) {
+            return false;
+        }
+
+        foreach (array_keys($data->number) as $key) {
+            $data->number[$key] = unformat_float($data->number[$key]);
+        }
+
+        foreach (array_keys($data->calcmin) as $key) {
+            $data->calcmin[$key] = unformat_float($data->calcmin[$key]);
+        }
+
+        foreach (array_keys($data->calcmax) as $key) {
+            $data->calcmax[$key] = unformat_float($data->calcmax[$key]);
+        }
+
+        return $data;
     }
 }
