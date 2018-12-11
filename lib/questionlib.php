@@ -940,6 +940,10 @@ function _tidy_question($question, $category, array $tagobjects = null, array $f
         }
     } catch (Exception $e) {
         $question->loadingexception = new moodle_exception('errorloadingquestion', 'question', '', $question->id, null, $e);
+    } finally {
+        if (isset($question->loadingexception)) {
+            $question->questiontext = html_writer::tag('p', get_string('optionsfailed', 'core_question')) . $question->questiontext;
+        }
     }
 
     // Convert numeric fields to float. (Prevents these being displayed as 1.0000000.)
