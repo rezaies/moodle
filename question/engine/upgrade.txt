@@ -1,5 +1,8 @@
 This files describes API changes for the core question engine.
 
+=== 3.6 ===
+* question_bank::load_question_data() now has a new optional parameter: allowbroken.
+
 === 3.1, 3.0.3, 2.9.5 ===
 
 1) The field question_display_options::$extrainfocontent is now displayed in the

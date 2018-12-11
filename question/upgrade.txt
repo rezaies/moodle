@@ -1,5 +1,10 @@
 This files describes API changes for code that uses the question API.
 
+=== 3.6 ===
+* Cached questions may now have a new attribute (loadingexception) which contains the
+  exception that's caught during the loading oof the question's options. If there is
+  no exception then loadingexception would be unset.
+
 === 3.5 ===
 
 1) The question format exportprocess function now adds a

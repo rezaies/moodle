@@ -248,11 +248,20 @@ abstract class question_bank {
     /**
      * Load a question definition data from the database. The data will be
      * returned as a plain stdClass object.
+     * If the $allowbroken argument is set to true, then the question definition data
+     * will be loaded even if the question is broken.
+     *
      * @param int $questionid the id of the question to load.
+     * @param bool $allowbroken Whether to allow a broken question being loaded or not.
      * @return object question definition loaded from the database.
+     * @throws Exception If there was an exception loading question data.
      */
-    public static function load_question_data($questionid) {
-        return question_finder::get_instance()->load_question_data($questionid);
+    public static function load_question_data($questionid, $allowbroken = false) {
+        $questiondata = question_finder::get_instance()->load_question_data($questionid);
+        if (isset($questiondata->loadingexception) && !$allowbroken) {
+            throw $questiondata->loadingexception;
+        }
+        return $questiondata;
     }
 
     /**
@@ -264,10 +273,8 @@ abstract class question_bank {
      * @return question_definition loaded from the database.
      */
     public static function load_question($questionid, $allowshuffle = true) {
-        global $DB;
-
         if (self::$testmode) {
-            // Evil, test code in production, but now way round it.
+            // Evil, test code in production, but no way round it.
             return self::return_test_question_data($questionid);
         }
 
@@ -602,7 +609,14 @@ class question_finder implements cache_data_source {
                 $qubaids->from_where_params() + $params + $extraparams);
     }
 
-    /* See cache_data_source::load_for_cache. */
+    /**
+     * Loads the question along with its options for the questionid provided ready formatted for caching.
+     * The loaded question may have a loadingexception attribute which contains the caught exception (if any) when
+     * trying to load question options.
+     *
+     * @param int|string $questionid The id of the question to load.
+     * @return stdClass The question along with its options and a loadingexception attribute (only if there were an exception).
+     */
     public function load_for_cache($questionid) {
         global $DB;
         $questiondata = $DB->get_record_sql('
@@ -614,7 +628,15 @@ class question_finder implements cache_data_source {
         return $questiondata;
     }
 
-    /* See cache_data_source::load_many_for_cache. */
+    /**
+     * Loads several questions (along with their options) for the cache.
+     * Each loaded question may have a loadingexception attribute which contains the caught exception (if any) when
+     * trying to load question options.
+     *
+     * @param array $questionids An array of question ids each of which will be string|int.
+     * @return array An array of matching questions.
+     * @throws dml_missing_record_exception
+     */
     public function load_many_for_cache(array $questionids) {
         global $DB;
         list($idcondition, $params) = $DB->get_in_or_equal($questionids);
