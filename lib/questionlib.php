@@ -948,6 +948,10 @@ function _tidy_question($question, $category, array $tagobjects = null, array $f
             'message' => $e->getMessage(),
             'tracestring' => $e->getTraceAsString()
         ];
+    } finally {
+        if (isset($question->loadingexception)) {
+            $question->questiontext = html_writer::tag('p', get_string('optionsfailed', 'core_question')) . $question->questiontext;
+        }
     }
 
     // Convert numeric fields to float. (Prevents these being displayed as 1.0000000.)
