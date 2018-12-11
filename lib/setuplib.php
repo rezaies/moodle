@@ -96,8 +96,9 @@ class moodle_exception extends Exception {
      * @param string $link The url where the user will be prompted to continue. If no url is provided the user will be directed to the site index page.
      * @param mixed $a Extra words and phrases that might be required in the error string
      * @param string $debuginfo optional debugging information
+     * @param Throwable $previous if this exception was caused by another one, you can pass the previous exception here.
      */
-    function __construct($errorcode, $module='', $link='', $a=NULL, $debuginfo=null) {
+    function __construct($errorcode, $module='', $link='', $a=NULL, $debuginfo=null, Throwable $previous = null) {
         global $CFG;
 
         if (empty($module) || $module == 'moodle' || $module == 'core') {
@@ -139,7 +140,7 @@ class moodle_exception extends Exception {
             $message .= PHP_EOL.'$a contents: '.print_r($a, true);
         }
 
-        parent::__construct($message, 0);
+        parent::__construct($message, 0, $previous);
     }
 }
 
