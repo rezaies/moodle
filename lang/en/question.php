@@ -133,6 +133,7 @@ $string['errorfilecannotbecopied'] = 'Error: cannot copy file {$a}.';
 $string['errorfilecannotbemoved'] = 'Error: cannot move file {$a}.';
 $string['errorfileschanged'] = 'Error: files linked to from questions have changed since form was displayed.';
 $string['erroritemappearsmorethanoncewithdifferentweight'] = 'The question ({$a}) appears more than once with different weights in different positions of the test. This is not currently supported by the statistics report and may make the statistics for this question unreliable.';
+$string['errorloadingquestion'] = 'Error: the question ({$a}) could not be loaded.';
 $string['errormanualgradeoutofrange'] = 'The grade {$a->grade} is not between 0 and {$a->maxgrade} for question {$a->name}. The score and comment have not been saved.';
 $string['errormovingquestions'] = 'Error while moving questions with ids {$a}.';
 $string['errorpostprocess'] = 'Error occurred during post-processing!';

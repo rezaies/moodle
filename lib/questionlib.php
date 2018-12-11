@@ -891,7 +891,11 @@ function question_preload_questions($questionids = null, $extrafields = '', $joi
 /**
  * Load a set of questions, given a list of ids. The $join and $extrafields arguments can be used
  * together to pull in extra data. See, for example, the usage in mod/quiz/attempt.php, and
- * read the code below to see how the SQL is assembled. Throws exceptions on error.
+ * read the code below to see how the SQL is assembled.
+ *
+ * This function does not throw exceptions on error. Instead, it populates the loadingexception attribute
+ * of the broken question with the caught exception. You may want to check each question and check
+ * if loading exception is set for them after calling this function.
  *
  * @param array $questionids array of question ids.
  * @param string $extrafields extra SQL code to be added to the query.
@@ -914,6 +918,8 @@ function question_load_questions($questionids, $extrafields = '', $join = '') {
 
 /**
  * Private function to factor common code out of get_question_options().
+ * This functions avoids throwing exceptions. Instead, it sets $question->loadingexception when an exception occurs.
+ * You may want to check if $question->loadingexception is set after calling this function.
  *
  * @param object $question the question to tidy.
  * @param stdClass $category The question_categories record for the given $question.
@@ -921,14 +927,28 @@ function question_load_questions($questionids, $extrafields = '', $join = '') {
  * @param stdClass[]|null $filtercourses The courses to filter the course tags by.
  */
 function _tidy_question($question, $category, array $tagobjects = null, array $filtercourses = null) {
-    global $CFG;
-
     // Load question-type specific fields.
     if (!question_bank::is_qtype_installed($question->qtype)) {
         $question->questiontext = html_writer::tag('p', get_string('warningmissingtype',
                 'qtype_missingtype')) . $question->questiontext;
     }
-    question_bank::get_qtype($question->qtype)->get_question_options($question);
+
+    try {
+        $optionsloaded = question_bank::get_qtype($question->qtype)->get_question_options($question);
+        if ($optionsloaded === false) {
+            $e = new moodle_exception('errorloadingquestion', 'question', '', $question->id);
+            $question->loadingexception = (object)[
+                'message' => $e->getMessage(),
+                'tracestring' => $e->getTraceAsString()
+            ];
+        }
+    } catch (Exception $e) {
+        $e = new moodle_exception('errorloadingquestion', 'question', '', $question->id, null, $e);
+        $question->loadingexception = (object)[
+            'message' => $e->getMessage(),
+            'tracestring' => $e->getTraceAsString()
+        ];
+    }
 
     // Convert numeric fields to float. (Prevents these being displayed as 1.0000000.)
     $question->defaultmark += 0;
@@ -956,6 +976,10 @@ function _tidy_question($question, $category, array $tagobjects = null, array $f
  *
  * Can be called either with an array of question objects or with a single
  * question object.
+ *
+ * This functions avoids throwing exceptions. Instead, it sets the loadingexception attribute of the broken question
+ * to the caught exception. You may want to check each question and check if loadingexception is set for them after
+ * calling this function.
  *
  * @param mixed $questions Either an array of question objects to be updated
  *         or just a single question object
@@ -1660,14 +1684,14 @@ function question_has_capability_on($questionorid, $cap, $notused = -1) {
     global $USER;
 
     if (is_numeric($questionorid)) {
-        $question = question_bank::load_question_data((int)$questionorid);
+        $question = question_bank::load_question_data((int)$questionorid, true);
     } else if (is_object($questionorid)) {
         if (isset($questionorid->contextid) && isset($questionorid->createdby)) {
             $question = $questionorid;
         }
 
         if (!isset($question) && isset($questionorid->id) && $questionorid->id != 0) {
-            $question = question_bank::load_question_data($questionorid->id);
+            $question = question_bank::load_question_data($questionorid->id, true);
         }
     } else {
         throw new coding_exception('$questionorid parameter needs to be an integer or an object.');
