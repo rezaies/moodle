@@ -122,6 +122,11 @@ class question_usage_db_test extends data_loading_method_test_base {
 
         $qa = $quba->get_question_attempt(1);
         $this->assertEquals(0, $qa->get_num_steps());
+
+        // The message of the exception below, should be displayed 3 times (per question) as a debugging message.
+        $e = new coding_exception('question_bank::return_test_data(0) called,' .
+                ' but no matching question has been loaded by load_test_data.');
+        $this->assertDebuggingCalledCount(3, [$e->getMessage(), $e->getMessage(), $e->getMessage()]);
     }
 
     public function test_load_data_no_qas() {

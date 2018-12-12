@@ -114,6 +114,61 @@ class question_attempt_db_test extends data_loading_method_test_base {
                 $step->get_all_data());
     }
 
+    public function test_load_broken_question() {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $generator = $this->getDataGenerator();
+        $questiongenerator = $generator->get_plugin_generator('core_question');
+
+        // Cerate a course.
+        $course = $generator->create_course();
+        $context = context_course::instance($course->id);
+
+        // Create a question in the default category.
+        $contexts = new question_edit_contexts($context);
+        $cat = question_make_default_categories($contexts->all());
+        $question = $questiongenerator->create_question('multianswer', null,
+                ['name' => 'Example question', 'category' => $cat->id]);
+
+        // Break the question by deleting its sub-questions.
+        $DB->delete_records('question_multianswer', ['question' => $question->id]);
+
+        $records = new question_test_recordset(array(
+            array(
+                'questionattemptid', 'contextid', 'questionusageid', 'slot',
+                'behaviour', 'questionid', 'variant', 'maxmark', 'minfraction', 'maxfraction', 'flagged',
+                'questionsummary', 'rightanswer', 'responsesummary', 'timemodified',
+                'attemptstepid', 'sequencenumber', 'state', 'fraction',
+                'timecreated', 'userid', 'name', 'value'
+            ),
+            array(
+                1, 123, 1, 1,
+                'deferredfeedback', $question->id, 1, 2.0000000, 0.0000000, 1.0000000, 0,
+                '', '', '', 1256233790,
+                1, 0, 'todo', null,
+                1256233700, 1, null, null
+            ),
+        ));
+
+        $qa = question_attempt::load_from_records($records, 1, new question_usage_null_observer(), 'deferredfeedback');
+
+        $missingq = question_bank::get_qtype('missingtype')->make_deleted_instance($question->id, $question->defaultmark);
+        $this->assertEquals($missingq, $qa->get_question());
+
+        $this->assertEquals(1, $qa->get_num_steps());
+
+        $step = $qa->get_step(0);
+        $this->assertEquals(question_state::$todo, $step->get_state());
+        $this->assertNull($step->get_fraction());
+        $this->assertEquals(1256233700, $step->get_timecreated());
+        $this->assertEquals(1, $step->get_user_id());
+        $this->assertEquals(array(), $step->get_all_data());
+
+        $this->assertDebuggingCalled(get_string('errorloadingquestion', 'question', $question->id));
+    }
+
     public function test_load_missing_question() {
         $records = new question_test_recordset(array(
             array('questionattemptid', 'contextid', 'questionusageid', 'slot',
@@ -139,6 +194,11 @@ class question_attempt_db_test extends data_loading_method_test_base {
         $this->assertEquals(1256233700, $step->get_timecreated());
         $this->assertEquals(1, $step->get_user_id());
         $this->assertEquals(array(), $step->get_all_data());
+
+        // The message of the exception below, should be displayed as a debugging message.
+        $e = new coding_exception('question_bank::return_test_data(-1) called,' .
+                ' but no matching question has been loaded by load_test_data.');
+        $this->assertDebuggingCalled($e->getMessage());
     }
 
     public function test_load_with_autosaved_data() {
