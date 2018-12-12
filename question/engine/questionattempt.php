@@ -1464,8 +1464,9 @@ class question_attempt {
         try {
             $question = question_bank::load_question($record->questionid);
         } catch (Exception $e) {
-            // The question must have been deleted somehow. Create a missing
+            // The question is either badly broken, or have been deleted somehow. Create a missing
             // question to use in its place.
+            debugging($e->getMessage(), DEBUG_NORMAL, $e->getTrace());
             $question = question_bank::get_qtype('missingtype')->make_deleted_instance(
                     $record->questionid, $record->maxmark + 0);
         }
