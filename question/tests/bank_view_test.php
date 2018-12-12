@@ -37,9 +37,12 @@ require_once($CFG->dirroot . '/question/editlib.php');
  */
 class core_question_bank_view_testcase extends advanced_testcase {
 
-    public function test_viewing_question_bank_should_not_load_individual_questions() {
+    public function test_one_broken_question_should_not_break_viewing_question_bank() {
+        global $DB;
+
         $this->resetAfterTest();
         $this->setAdminUser();
+
         $generator = $this->getDataGenerator();
         /** @var core_question_generator $questiongenerator */
         $questiongenerator = $generator->get_plugin_generator('core_question');
@@ -51,10 +54,13 @@ class core_question_bank_view_testcase extends advanced_testcase {
         // Create a question in the default category.
         $contexts = new question_edit_contexts($context);
         $cat = question_make_default_categories($contexts->all());
-        $questiondata = $questiongenerator->create_question('numerical', null,
+        $questiondata = $questiongenerator->create_question('multianswer', null,
                 ['name' => 'Example question', 'category' => $cat->id]);
 
-        // Ensure the qusetion is not in the cache.
+        // Break the question by deleting its sub-questions.
+        $DB->delete_records('question_multianswer', ['question' => $questiondata->id]);
+
+        // Ensure the question is not in the cache.
         $cache = cache::make('core', 'questiondata');
         $cache->delete($questiondata->id);
 
@@ -67,7 +73,11 @@ class core_question_bank_view_testcase extends advanced_testcase {
         // Verify the output includes the expected question.
         $this->assertContains('Example question', $html);
 
-        // Verify the qusetion has not been loaded into the cache.
-        $this->assertFalse($cache->has($questiondata->id));
+        // Verify the question has been loaded into the cache.
+        $this->assertTrue($cache->has($questiondata->id));
+
+        // Verify the loadingexception property is set.
+        $question = $cache->get($questiondata->id);
+        $this->assertNotEmpty($question->loadingexception);
     }
 }
