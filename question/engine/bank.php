@@ -264,10 +264,8 @@ abstract class question_bank {
      * @return question_definition loaded from the database.
      */
     public static function load_question($questionid, $allowshuffle = true) {
-        global $DB;
-
         if (self::$testmode) {
-            // Evil, test code in production, but now way round it.
+            // Evil, test code in production, but no way round it.
             return self::return_test_question_data($questionid);
         }
 
