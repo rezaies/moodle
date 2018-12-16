@@ -1671,7 +1671,8 @@ class core_questionlib_testcase extends advanced_testcase {
         $result = question_has_capability_on($question->id, 'tag');
         $this->assertTrue($result);
 
-        $this->assertDebuggingCalled();
+        $this->assertNotEmpty($this->getDebuggingMessages());
+        $this->resetDebugging();
     }
 
     /**

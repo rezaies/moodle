@@ -110,7 +110,13 @@ class qtype_multianswer_question extends question_graded_automatically_with_coun
             $fractionmax += $subq->defaultmark;
             $fractionsum += $subq->defaultmark * $subq->get_min_fraction();
         }
-        return $fractionsum / $fractionmax;
+
+        if ($fractionmax) {
+            return $fractionsum / $fractionmax;
+        } else {
+            // This should never happen unless there is no sub-question for some unknown reasons.
+            return 0;
+        }
     }
 
     public function get_max_fraction() {
@@ -120,7 +126,13 @@ class qtype_multianswer_question extends question_graded_automatically_with_coun
             $fractionmax += $subq->defaultmark;
             $fractionsum += $subq->defaultmark * $subq->get_max_fraction();
         }
-        return $fractionsum / $fractionmax;
+
+        if ($fractionmax) {
+            return $fractionsum / $fractionmax;
+        } else {
+            // This should never happen unless there is no sub-question for some unknown reasons.
+            return 1;
+        }
     }
 
     public function get_expected_data() {

@@ -79,5 +79,8 @@ class core_question_bank_view_testcase extends advanced_testcase {
         // Verify the loadingexception property is set.
         $question = $cache->get($questiondata->id);
         $this->assertNotEmpty($question->loadingexception);
+
+        $this->assertNotEmpty($this->getDebuggingMessages());
+        $this->resetDebugging();
     }
 }
