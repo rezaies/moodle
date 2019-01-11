@@ -256,13 +256,13 @@ function groups_get_all_groups($courseid, $userid=0, $groupingid=0, $fields='g.*
         $params = array();
     } else {
         list($usql, $params) = $DB->get_in_or_equal($userid);
-        $userfrom  = ", {groups_members} gm";
-        $userwhere = "AND g.id = gm.groupid AND gm.userid $usql";
+        $userfrom  = "JOIN {groups_members} gm ON g.id = gm.groupid";
+        $userwhere = "AND gm.userid $usql";
     }
 
     if (!empty($groupingid)) {
-        $groupingfrom  = ", {groupings_groups} gg";
-        $groupingwhere = "AND g.id = gg.groupid AND gg.groupingid = ?";
+        $groupingfrom  = "JOIN {groupings_groups} gg ON g.id = gg.groupid";
+        $groupingwhere = "AND gg.groupingid = ?";
         $params[] = $groupingid;
     } else {
         $groupingfrom  = "";
