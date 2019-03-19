@@ -7480,6 +7480,20 @@ function forum_is_cutoff_date_reached($forum) {
 }
 
 /**
+ * Determine whether the specified forum's due date is reached.
+ *
+ * @param stdClass $forum The forum
+ * @return bool
+ */
+function forum_is_due_date_reached($forum) {
+    if (!empty($forum->duedate) && ($forum->duedate < time())) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
  * Determine whether the specified discussion is time-locked.
  *
  * @param   stdClass    $forum          The forum that the discussion belongs to

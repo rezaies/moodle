@@ -3106,24 +3106,66 @@ class mod_forum_lib_testcase extends advanced_testcase {
     public function forum_is_cutoff_date_reached_provider() {
         $now = time();
         return [
-            'Unlocked: cutoffdate is unset' => [
+            'cutoffdate is unset' => [
                 (object) [],
                 false
             ],
-            'Unlocked: cutoffdate is 0' => [
+            'cutoffdate is 0' => [
                 (object) ['cutoffdate' => 0],
                 false
             ],
-            'Unlocked: cutoffdate is null' => [
+            'cutoffdate is null' => [
                 (object) ['cutoffdate' => null],
                 false
             ],
-            'Unlocked: cutoffdate is set and is in future' => [
+            'cutoffdate is set and is in future' => [
                 (object) ['cutoffdate' => $now + 86400],
                 false
             ],
-            'Unlocked: cutoffdate is set and is in past' => [
+            'cutoffdate is set and is in past' => [
                 (object) ['cutoffdate' => $now - 86400],
+                true
+            ],
+        ];
+    }
+
+    /**
+     * Test the forum_is_due_date_reached function.
+     *
+     * @dataProvider forum_is_due_date_reached_provider
+     * @param   stdClass    $forum
+     * @param   bool        $expect
+     */
+    public function test_forum_is_due_date_reached($forum, $expect) {
+        $this->assertEquals($expect, forum_is_due_date_reached($forum));
+    }
+
+    /**
+     * Dataprovider for forum_is_due_date_reached tests.
+     *
+     * @return  array
+     */
+    public function forum_is_due_date_reached_provider() {
+        $now = time();
+        return [
+            'duedate is unset' => [
+                (object) [],
+                false
+            ],
+            'duedate is 0' => [
+                (object) ['duedate' => 0],
+                false
+            ],
+            'duedate is null' => [
+                (object) ['duedate' => null],
+                false
+            ],
+            'duedate is set and is in future' => [
+                (object) ['duedate' => $now + 86400],
+                false
+            ],
+            'duedate is set and is in past' => [
+                (object) ['duedate' => $now - 86400],
                 true
             ],
         ];
