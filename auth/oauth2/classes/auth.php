@@ -554,4 +554,22 @@ class auth extends \auth_plugin_base {
         $this->update_picture($user);
         redirect($redirecturl);
     }
+
+    public function send_password_change_info($user) {
+        $site = get_site();
+        $supportuser = \core_user::get_support_user();
+
+        $data = new stdClass();
+        $data->firstname = $user->firstname;
+        $data->lastname  = $user->lastname;
+        $data->username  = $user->username;
+        $data->sitename  = format_string($site->fullname);
+        $data->admin     = generate_email_signoff();
+
+        $message = get_string('emailpasswordchangeinfo', 'auth_oauth2', $data);
+        $subject = get_string('emailpasswordchangeinfosubject', 'auth_oauth2', format_string($site->fullname));
+
+        // Directly email rather than using the messaging system to ensure its not routed to a popup or jabber.
+        return email_to_user($user, $supportuser, $subject, $message);
+    }
 }
