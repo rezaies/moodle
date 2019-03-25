@@ -70,6 +70,15 @@ $string['emailconfirmlinksent'] = '<p>An existing account was found with this em
    <p>An email should have been sent to your address at <b>{$a}</b>.</p>
    <p>It contains easy instructions to link your accounts.</p>
    <p>If you have any difficulty, contact the site administrator.</p>';
+$string['emailpasswordchangeinfo'] = 'Hi {$a->firstname},
+
+Someone (probably you) has requested a new password for your account on \'{$a->sitename}\'.
+
+We are unable to reset your password because you are using an account on another site to log in, and therefore your account is not managed by us. Please log in as before, using the link on the login page.
+
+If you really need to reset your password, please visit the website that your account belongs to.
+{$a->admin}';
+$string['emailpasswordchangeinfosubject'] = '{$a}: Change password information';
 $string['info'] = 'External account';
 $string['issuer'] = 'OAuth 2 Service';
 $string['issuernologin'] = 'This issuer can not be used to login';
