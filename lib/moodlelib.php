@@ -6342,17 +6342,14 @@ function send_password_change_confirmation_email($user, $resetrecord) {
 }
 
 /**
- * Sends an email containinginformation on how to change your password.
+ * Sends an email containing information on how to change your password.
  *
  * @param stdClass $user A {@link $USER} object
  * @return bool Returns true if mail was sent OK and false if there was an error.
  */
 function send_password_change_info($user) {
-    global $CFG;
-
     $site = get_site();
     $supportuser = core_user::get_support_user();
-    $systemcontext = context_system::instance();
 
     $data = new stdClass();
     $data->firstname = $user->firstname;
@@ -6361,8 +6358,6 @@ function send_password_change_info($user) {
     $data->sitename  = format_string($site->fullname);
     $data->admin     = generate_email_signoff();
 
-    $userauth = get_auth_plugin($user->auth);
-
     if (!is_enabled_auth($user->auth) or $user->auth == 'nologin') {
         $message = get_string('emailpasswordchangeinfodisabled', '', $data);
         $subject = get_string('emailpasswordchangeinfosubject', '', format_string($site->fullname));
@@ -6370,26 +6365,8 @@ function send_password_change_info($user) {
         return email_to_user($user, $supportuser, $subject, $message);
     }
 
-    if ($userauth->can_change_password() and $userauth->change_password_url()) {
-        // We have some external url for password changing.
-        $data->link .= $userauth->change_password_url();
-
-    } else {
-        // No way to change password, sorry.
-        $data->link = '';
-    }
-
-    if (!empty($data->link) and has_capability('moodle/user:changeownpassword', $systemcontext, $user->id)) {
-        $message = get_string('emailpasswordchangeinfo', '', $data);
-        $subject = get_string('emailpasswordchangeinfosubject', '', format_string($site->fullname));
-    } else {
-        $message = get_string('emailpasswordchangeinfofail', '', $data);
-        $subject = get_string('emailpasswordchangeinfosubject', '', format_string($site->fullname));
-    }
-
-    // Directly email rather than using the messaging system to ensure its not routed to a popup or jabber.
-    return email_to_user($user, $supportuser, $subject, $message);
-
+    $userauth = get_auth_plugin($user->auth);
+    return $userauth->send_password_change_info($user);
 }
 
 /**
