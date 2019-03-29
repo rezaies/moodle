@@ -168,22 +168,6 @@ class qtype_multichoice extends question_type {
         $DB->update_record('qtype_multichoice_options', $options);
 
         $this->save_hints($question, true);
-
-        // Perform sanity checks on fractional grades.
-        if ($options->single) {
-            if ($maxfraction != 1) {
-                $result->noticeyesno = get_string('fractionsnomax', 'qtype_multichoice',
-                        $maxfraction * 100);
-                return $result;
-            }
-        } else {
-            $totalfraction = round($totalfraction, 2);
-            if ($totalfraction != 1) {
-                $result->noticeyesno = get_string('fractionsaddwrong', 'qtype_multichoice',
-                        $totalfraction * 100);
-                return $result;
-            }
-        }
     }
 
     protected function make_question_instance($questiondata) {
