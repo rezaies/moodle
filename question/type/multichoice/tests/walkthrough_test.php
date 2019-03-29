@@ -36,7 +36,7 @@ require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
 
 
 /**
- * Unit tests for the mutiple choice question type.
+ * Unit tests for the multiple choice question type.
  *
  * @copyright  2010 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -91,6 +91,60 @@ class qtype_multichoice_walkthrough_test extends qbehaviour_walkthrough_test_bas
         $this->check_current_output(
                 $this->get_contains_mc_checkbox_expectation('choice0', false, true),
                 $this->get_contains_mc_checkbox_expectation('choice1', false, false),
+                $this->get_contains_mc_checkbox_expectation('choice2', false, true),
+                $this->get_contains_mc_checkbox_expectation('choice3', false, false),
+                $this->get_contains_correct_expectation(),
+                new question_pattern_expectation('/class="r0 correct"/'),
+                new question_pattern_expectation('/class="r1"/'));
+    }
+
+    public function test_deferredfeedback_feedback_multichoice_multi_overgrade_partial() {
+        // Create a multichoice, multi question.
+        $mc = test_question_maker::make_a_multichoice_multi_question();
+        $mc->shuffleanswers = false;
+        // Make one of the wrong choices partially right.
+        $mc->answers[14]->fraction = 0.5;
+        $mc->answers[14]->feedback = 'B is part of the right answer';
+
+        $this->start_attempt_at_question($mc, 'deferredfeedback', 2);
+        $correctresponse = $mc->get_correct_response();
+        // Remove the last response from the array.
+        //Given the question's setup, it should be enough to get the ful mark of the question with 2 correct choices.
+        array_pop($correctresponse);
+        $this->process_submission($correctresponse);
+        $this->quba->finish_all_questions();
+
+        // Verify.
+        $this->check_current_state(question_state::$gradedright);
+        $this->check_current_mark(2);
+        $this->check_current_output(
+                $this->get_contains_mc_checkbox_expectation('choice0', false, true),
+                $this->get_contains_mc_checkbox_expectation('choice1', false, true),
+                $this->get_contains_mc_checkbox_expectation('choice2', false, false),
+                $this->get_contains_mc_checkbox_expectation('choice3', false, false),
+                $this->get_contains_correct_expectation(),
+                new question_pattern_expectation('/class="r0 correct"/'),
+                new question_pattern_expectation('/class="r1"/'));
+    }
+
+    public function test_deferredfeedback_feedback_multichoice_multi_overgrade_all() {
+        // Create a multichoice, multi question.
+        $mc = test_question_maker::make_a_multichoice_multi_question();
+        $mc->shuffleanswers = false;
+        // Make one of the wrong choices partially right.
+        $mc->answers[14]->fraction = 0.5;
+        $mc->answers[14]->feedback = 'B is part of the right answer';
+
+        $this->start_attempt_at_question($mc, 'deferredfeedback', 2);
+        $this->process_submission($mc->get_correct_response());
+        $this->quba->finish_all_questions();
+
+        // Verify.
+        $this->check_current_state(question_state::$gradedright);
+        $this->check_current_mark(2);
+        $this->check_current_output(
+                $this->get_contains_mc_checkbox_expectation('choice0', false, true),
+                $this->get_contains_mc_checkbox_expectation('choice1', false, true),
                 $this->get_contains_mc_checkbox_expectation('choice2', false, true),
                 $this->get_contains_mc_checkbox_expectation('choice3', false, false),
                 $this->get_contains_correct_expectation(),

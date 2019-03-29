@@ -150,7 +150,7 @@ class qtype_multichoice_edit_form extends question_edit_form {
             }
         } else {
             $totalfraction = round($totalfraction, 2);
-            if ($totalfraction != 1) {
+            if ($totalfraction < 1) {
                 $errors['fraction[0]'] = get_string('errfractionsaddwrong', 'qtype_multichoice',
                         $totalfraction * 100);
             }

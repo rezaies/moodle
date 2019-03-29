@@ -103,6 +103,29 @@ class qtype_multichoice_multi_question_test extends advanced_testcase {
                 $question->grade_response($question->prepare_simulated_post_data(array('B' => 1))));
     }
 
+    public function test_grading_overgrade() {
+        $question = test_question_maker::make_a_multichoice_multi_question();
+
+        // Make one of the wrong choices partially right.
+        $question->answers[14]->fraction = 0.5;
+        $question->answers[14]->feedback = 'B is part of the right answer';
+
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        $this->assertEquals(array(0.5, question_state::$gradedpartial),
+                $question->grade_response($question->prepare_simulated_post_data(array('A' => 1))));
+        $this->assertEquals(array(1, question_state::$gradedright),
+                $question->grade_response($question->prepare_simulated_post_data(array('A' => 1, 'C' => 1))));
+        $this->assertEquals(array(1, question_state::$gradedright),
+                $question->grade_response($question->prepare_simulated_post_data(array('A' => 1, 'B' => 1, 'C' => 1))));
+        $this->assertEquals(array(0.5, question_state::$gradedpartial),
+                $question->grade_response($question->prepare_simulated_post_data(array('A' => 1, 'B' => 1, 'C' => 1, 'D' => 1))));
+        $this->assertEquals(array(0, question_state::$gradedwrong),
+                $question->grade_response($question->prepare_simulated_post_data(array('A' => 1, 'B' => 1, 'D' => 1))));
+        $this->assertEquals(array(0, question_state::$gradedwrong),
+                $question->grade_response($question->prepare_simulated_post_data(array('D' => 1))));
+    }
+
     public function test_get_correct_response() {
         $question = test_question_maker::make_a_multichoice_multi_question();
         $question->start_attempt(new question_attempt_step(), 1);
