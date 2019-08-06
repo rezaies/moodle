@@ -3090,16 +3090,19 @@ function xmldb_main_upgrade($oldversion) {
         upgrade_main_savepoint(true, 2018120305.04);
     }
 
-    if ($oldversion < 2019052700) {
+    if ($oldversion < 2018120305.07) {
 
+        // Define index timemodified (not unique) to be added to files.
         $table = new xmldb_table('files');
-        $index = new xmldb_index('timemodified', XMLDB_INDEX_NOTUNIQUE, array('timemodified'));
+        $index = new xmldb_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
 
+        // Conditionally launch add index timemodified.
         if (!$dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
 
-        upgrade_plugin_savepoint(true, 2019052700, 'repository', 'recent');
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2018120305.07);
     }
 
     return true;
