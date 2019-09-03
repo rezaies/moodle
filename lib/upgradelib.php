@@ -636,26 +636,10 @@ function upgrade_plugins($type, $startcallback, $endcallback, $verbose) {
 
             $endcallback($component, true, $verbose);
 
-        } else if ($installedversion < $plugin->version) { // upgrade
-        /// Run the upgrade function for the plugin.
+        } else if ($installedversion < $plugin->version) { // Upgrade.
             $startcallback($component, false, $verbose);
 
-            if (is_readable($fullplug.'/db/upgrade.php')) {
-                require_once($fullplug.'/db/upgrade.php');  // defines upgrading function
-
-                $newupgrade_function = 'xmldb_'.$plugin->fullname.'_upgrade';
-                $result = $newupgrade_function($installedversion);
-            } else {
-                $result = true;
-            }
-
-            $installedversion = $DB->get_field('config_plugins', 'value', array('name'=>'version', 'plugin'=>$component)); // No caching!
-            if ($installedversion < $plugin->version) {
-                // store version if not already there
-                upgrade_plugin_savepoint($result, $plugin->version, $type, $plug, false);
-            }
-
-        /// Upgrade various components
+            // Upgrade various components.
             update_capabilities($component);
             log_update_descriptions($component);
             external_update_descriptions($component);
@@ -663,12 +647,32 @@ function upgrade_plugins($type, $startcallback, $endcallback, $verbose) {
             \core_analytics\manager::update_default_models_for_component($component);
             message_update_providers($component);
             \core\message\inbound\manager::update_handlers_for_component($component);
+            upgrade_plugin_mnet_functions($component);
+            core_tag_area::reset_definitions_for_component($component);
+
+            // Run the upgrade function for the plugin.
+            if (is_readable($fullplug.'/db/upgrade.php')) {
+                require_once($fullplug.'/db/upgrade.php');  // Defines upgrading function.
+
+                $newupgrade_function = 'xmldb_'.$plugin->fullname.'_upgrade';
+                $result = $newupgrade_function($installedversion);
+            } else {
+                $result = true;
+            }
+
+            $installedversion = $DB->get_field('config_plugins', 'value',
+                    ['name' => 'version', 'plugin' => $component]); // No caching!
+            if ($installedversion < $plugin->version) {
+                // Store version if not already there.
+                upgrade_plugin_savepoint($result, $plugin->version, $type, $plug, false);
+            }
+
+            // Message processors are a bit special. They only can be updated in db/upgrade.php.
             if ($type === 'message') {
                 // Ugly hack!
                 message_update_processors($plug);
             }
-            upgrade_plugin_mnet_functions($component);
-            core_tag_area::reset_definitions_for_component($component);
+
             $endcallback($component, false, $verbose);
 
         } else if ($installedversion > $plugin->version) {
@@ -812,30 +816,10 @@ function upgrade_plugins_modules($startcallback, $endcallback, $verbose) {
             $endcallback($component, true, $verbose);
 
         } else if ($installedversion < $plugin->version) {
-        /// If versions say that we need to upgrade but no upgrade files are available, notify and continue
+            // If versions say that we need to upgrade but no upgrade files are available, notify and continue.
             $startcallback($component, false, $verbose);
 
-            if (is_readable($fullmod.'/db/upgrade.php')) {
-                require_once($fullmod.'/db/upgrade.php');  // defines new upgrading function
-                $newupgrade_function = 'xmldb_'.$module->name.'_upgrade';
-                $result = $newupgrade_function($installedversion, $module);
-            } else {
-                $result = true;
-            }
-
-            $installedversion = $DB->get_field('config_plugins', 'value', array('name'=>'version', 'plugin'=>$component)); // No caching!
-            $currmodule = $DB->get_record('modules', array('name'=>$module->name));
-            if ($installedversion < $plugin->version) {
-                // store version if not already there
-                upgrade_mod_savepoint($result, $plugin->version, $mod, false);
-            }
-
-            // update cron flag if needed
-            if ($currmodule->cron != $module->cron) {
-                $DB->set_field('modules', 'cron', $module->cron, array('name' => $module->name));
-            }
-
-            // Upgrade various components
+            // Upgrade various components.
             update_capabilities($component);
             log_update_descriptions($component);
             external_update_descriptions($component);
@@ -845,6 +829,28 @@ function upgrade_plugins_modules($startcallback, $endcallback, $verbose) {
             \core\message\inbound\manager::update_handlers_for_component($component);
             upgrade_plugin_mnet_functions($component);
             core_tag_area::reset_definitions_for_component($component);
+
+            // Run the upgrade function for the plugin.
+            if (is_readable($fullmod.'/db/upgrade.php')) {
+                require_once($fullmod.'/db/upgrade.php');  // Defines new upgrading function.
+                $newupgrade_function = 'xmldb_'.$module->name.'_upgrade';
+                $result = $newupgrade_function($installedversion, $module);
+            } else {
+                $result = true;
+            }
+
+            $installedversion = $DB->get_field('config_plugins', 'value',
+                    ['name' => 'version', 'plugin' => $component]); // No caching!
+            $currmodule = $DB->get_record('modules', array('name' => $module->name));
+            if ($installedversion < $plugin->version) {
+                // Store version if not already there.
+                upgrade_mod_savepoint($result, $plugin->version, $mod, false);
+            }
+
+            // Update cron flag if needed.
+            if ($currmodule->cron != $module->cron) {
+                $DB->set_field('modules', 'cron', $module->cron, array('name' => $module->name));
+            }
 
             $endcallback($component, false, $verbose);
 
@@ -1014,27 +1020,7 @@ function upgrade_plugins_blocks($startcallback, $endcallback, $verbose) {
         } else if ($installedversion < $plugin->version) {
             $startcallback($component, false, $verbose);
 
-            if (is_readable($fullblock.'/db/upgrade.php')) {
-                require_once($fullblock.'/db/upgrade.php');  // defines new upgrading function
-                $newupgrade_function = 'xmldb_block_'.$blockname.'_upgrade';
-                $result = $newupgrade_function($installedversion, $block);
-            } else {
-                $result = true;
-            }
-
-            $installedversion = $DB->get_field('config_plugins', 'value', array('name'=>'version', 'plugin'=>$component)); // No caching!
-            $currblock = $DB->get_record('block', array('name'=>$block->name));
-            if ($installedversion < $plugin->version) {
-                // store version if not already there
-                upgrade_block_savepoint($result, $plugin->version, $block->name, false);
-            }
-
-            if ($currblock->cron != $block->cron) {
-                // update cron flag if needed
-                $DB->set_field('block', 'cron', $block->cron, array('id' => $currblock->id));
-            }
-
-            // Upgrade various components
+            // Upgrade various components.
             update_capabilities($component);
             log_update_descriptions($component);
             external_update_descriptions($component);
@@ -1044,6 +1030,28 @@ function upgrade_plugins_blocks($startcallback, $endcallback, $verbose) {
             \core\message\inbound\manager::update_handlers_for_component($component);
             upgrade_plugin_mnet_functions($component);
             core_tag_area::reset_definitions_for_component($component);
+
+            // Run the upgrade function for the plugin.
+            if (is_readable($fullblock.'/db/upgrade.php')) {
+                require_once($fullblock.'/db/upgrade.php');  // Defines new upgrading function.
+                $newupgrade_function = 'xmldb_block_'.$blockname.'_upgrade';
+                $result = $newupgrade_function($installedversion, $block);
+            } else {
+                $result = true;
+            }
+
+            $installedversion = $DB->get_field('config_plugins', 'value',
+                    ['name' => 'version', 'plugin' => $component]); // No caching!
+            $currblock = $DB->get_record('block', array('name' => $block->name));
+            if ($installedversion < $plugin->version) {
+                // Store version if not already there.
+                upgrade_block_savepoint($result, $plugin->version, $block->name, false);
+            }
+
+            if ($currblock->cron != $block->cron) {
+                // Update cron flag if needed.
+                $DB->set_field('block', 'cron', $block->cron, array('id' => $currblock->id));
+            }
 
             $endcallback($component, false, $verbose);
 
