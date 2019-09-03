@@ -572,19 +572,19 @@ function upgrade_plugins($type, $startcallback, $endcallback, $verbose) {
                 $recover_install_function = 'xmldb_'.$plugin->fullname.'_install_recovery';
                 if (function_exists($recover_install_function)) {
                     $startcallback($component, true, $verbose);
-                    $recover_install_function();
-                    unset_config('installrunning', $plugin->fullname);
                     update_capabilities($component);
                     log_update_descriptions($component);
                     external_update_descriptions($component);
                     \core\task\manager::reset_scheduled_tasks_for_component($component);
                     message_update_providers($component);
                     \core\message\inbound\manager::update_handlers_for_component($component);
+                    upgrade_plugin_mnet_functions($component);
+                    core_tag_area::reset_definitions_for_component($component);
+                    $recover_install_function();
+                    unset_config('installrunning', $plugin->fullname);
                     if ($type === 'message') {
                         message_update_processors($plug);
                     }
-                    upgrade_plugin_mnet_functions($component);
-                    core_tag_area::reset_definitions_for_component($component);
                     $endcallback($component, true, $verbose);
                 }
             }
@@ -594,15 +594,25 @@ function upgrade_plugins($type, $startcallback, $endcallback, $verbose) {
         if (empty($installedversion)) { // new installation
             $startcallback($component, true, $verbose);
 
-        /// Install tables if defined
+            // Install tables if defined.
             if (file_exists($fullplug.'/db/install.xml')) {
                 $DB->get_manager()->install_from_xmldb_file($fullplug.'/db/install.xml');
             }
 
-        /// store version
+            // Store version.
             upgrade_plugin_savepoint(true, $plugin->version, $type, $plug, false);
 
-        /// execute post install file
+            // Install various components.
+            update_capabilities($component);
+            log_update_descriptions($component);
+            external_update_descriptions($component);
+            \core\task\manager::reset_scheduled_tasks_for_component($component);
+            message_update_providers($component);
+            \core\message\inbound\manager::update_handlers_for_component($component);
+            upgrade_plugin_mnet_functions($component);
+            core_tag_area::reset_definitions_for_component($component);
+
+            // Execute post install file.
             if (file_exists($fullplug.'/db/install.php')) {
                 require_once($fullplug.'/db/install.php');
                 set_config('installrunning', 1, $plugin->fullname);
@@ -611,18 +621,11 @@ function upgrade_plugins($type, $startcallback, $endcallback, $verbose) {
                 unset_config('installrunning', $plugin->fullname);
             }
 
-        /// Install various components
-            update_capabilities($component);
-            log_update_descriptions($component);
-            external_update_descriptions($component);
-            \core\task\manager::reset_scheduled_tasks_for_component($component);
-            message_update_providers($component);
-            \core\message\inbound\manager::update_handlers_for_component($component);
+            // Message processors are a bit special. They only exist after db/install.php.
             if ($type === 'message') {
                 message_update_processors($plug);
             }
-            upgrade_plugin_mnet_functions($component);
-            core_tag_area::reset_definitions_for_component($component);
+
             $endcallback($component, true, $verbose);
 
         } else if ($installedversion < $plugin->version) { // upgrade
@@ -768,24 +771,14 @@ function upgrade_plugins_modules($startcallback, $endcallback, $verbose) {
         if (empty($installedversion)) {
             $startcallback($component, true, $verbose);
 
-        /// Execute install.xml (XMLDB) - must be present in all modules
+            // Execute install.xml (XMLDB) - must be present in all modules.
             $DB->get_manager()->install_from_xmldb_file($fullmod.'/db/install.xml');
 
-        /// Add record into modules table - may be needed in install.php already
+            // Add record into modules table - may be needed in install.php already.
             $module->id = $DB->insert_record('modules', $module);
             upgrade_mod_savepoint(true, $plugin->version, $module->name, false);
 
-        /// Post installation hook - optional
-            if (file_exists("$fullmod/db/install.php")) {
-                require_once("$fullmod/db/install.php");
-                // Set installation running flag, we need to recover after exception or error
-                set_config('installrunning', 1, $module->name);
-                $post_install_function = 'xmldb_'.$module->name.'_install';
-                $post_install_function();
-                unset_config('installrunning', $module->name);
-            }
-
-        /// Install various components
+            // Install various components.
             update_capabilities($component);
             log_update_descriptions($component);
             external_update_descriptions($component);
@@ -794,6 +787,16 @@ function upgrade_plugins_modules($startcallback, $endcallback, $verbose) {
             \core\message\inbound\manager::update_handlers_for_component($component);
             upgrade_plugin_mnet_functions($component);
             core_tag_area::reset_definitions_for_component($component);
+
+            // Post installation hook - optional.
+            if (file_exists("$fullmod/db/install.php")) {
+                require_once("$fullmod/db/install.php");
+                // Set installation running flag, we need to recover after exception or error.
+                set_config('installrunning', 1, $module->name);
+                $post_install_function = 'xmldb_' . $module->name . '_install';
+                $post_install_function();
+                unset_config('installrunning', $module->name);
+            }
 
             $endcallback($component, true, $verbose);
 
@@ -971,18 +974,9 @@ function upgrade_plugins_blocks($startcallback, $endcallback, $verbose) {
             $block->id = $DB->insert_record('block', $block);
             upgrade_block_savepoint(true, $plugin->version, $block->name, false);
 
-            if (file_exists($fullblock.'/db/install.php')) {
-                require_once($fullblock.'/db/install.php');
-                // Set installation running flag, we need to recover after exception or error
-                set_config('installrunning', 1, 'block_'.$blockname);
-                $post_install_function = 'xmldb_block_'.$blockname.'_install';
-                $post_install_function();
-                unset_config('installrunning', 'block_'.$blockname);
-            }
-
             $blocktitles[$block->name] = $blocktitle;
 
-            // Install various components
+            // Install various components.
             update_capabilities($component);
             log_update_descriptions($component);
             external_update_descriptions($component);
@@ -991,6 +985,15 @@ function upgrade_plugins_blocks($startcallback, $endcallback, $verbose) {
             \core\message\inbound\manager::update_handlers_for_component($component);
             core_tag_area::reset_definitions_for_component($component);
             upgrade_plugin_mnet_functions($component);
+
+            if (file_exists($fullblock . '/db/install.php')) {
+                require_once($fullblock . '/db/install.php');
+                // Set installation running flag, we need to recover after exception or error.
+                set_config('installrunning', 1, 'block_' . $blockname);
+                $post_install_function = 'xmldb_block_' . $blockname . '_install';
+                $post_install_function();
+                unset_config('installrunning', 'block_' . $blockname);
+            }
 
             $endcallback($component, true, $verbose);
 
