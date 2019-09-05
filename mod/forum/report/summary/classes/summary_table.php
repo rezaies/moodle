@@ -160,9 +160,9 @@ class summary_table extends table_sql {
      * @return string User's full name.
      */
     public function col_fullname($data): string {
-        $fullname = fullname($data);
+        global $OUTPUT;
 
-        return $fullname;
+        return $OUTPUT->user_picture($data, array('size' => 35, 'courseid' => $this->cm->course, 'includefullname' => true));
     }
 
     /**
