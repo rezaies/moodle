@@ -89,8 +89,9 @@ class summary_table extends table_sql {
      *
      * @param int $courseid The ID of the course the forum(s) exist within.
      * @param array $filters Report filters in the format 'type' => [values].
+     * @param bool $bulkoperations Is the user allowed to perform bulk operations?
      */
-    public function __construct(int $courseid, array $filters) {
+    public function __construct(int $courseid, array $filters, bool $bulkoperations) {
         global $USER, $OUTPUT;
 
         $forumid = $filters['forums'][0];
@@ -107,17 +108,21 @@ class summary_table extends table_sql {
 
         $this->courseid = intval($courseid);
 
-        $mastercheckbox = new \core\output\checkbox_toggleall('summaryreport-table', true, [
-            'id' => 'select-all-users',
-            'name' => 'select-all-users',
-            'label' => get_string('selectall'),
-            'labelclasses' => 'sr-only',
-            'classes' => 'm-1',
-            'checked' => false
-        ]);
+        $columnheaders = [];
 
-        $columnheaders = [
-            'select' => $OUTPUT->render($mastercheckbox),
+        if ($bulkoperations) {
+            $mastercheckbox = new \core\output\checkbox_toggleall('summaryreport-table', true, [
+                'id' => 'select-all-users',
+                'name' => 'select-all-users',
+                'label' => get_string('selectall'),
+                'labelclasses' => 'sr-only',
+                'classes' => 'm-1',
+                'checked' => false
+            ]);
+            $columnheaders['select'] = $OUTPUT->render($mastercheckbox);
+        }
+
+        $columnheaders += [
             'fullname' => get_string('fullnameuser'),
             'postcount' => get_string('postcount', 'forumreport_summary'),
             'replycount' => get_string('replycount', 'forumreport_summary'),

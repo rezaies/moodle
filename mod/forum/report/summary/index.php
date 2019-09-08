@@ -84,8 +84,47 @@ $renderer = $PAGE->get_renderer('forumreport_summary');
 echo $renderer->render_filters_form($cm, $url, $filters);
 
 // Prepare and display the report.
-$table = new \forumreport_summary\summary_table($courseid, $filters);
+$bulkoperations = has_capability('moodle/course:bulkmessaging', $context);
+
+$table = new \forumreport_summary\summary_table($courseid, $filters, $bulkoperations);
 $table->baseurl = $url;
+
+if ($bulkoperations) {
+    echo '<form action="action_redir.php" method="post" id="participantsform">';
+    echo '<input type="hidden" name="id" value="'.$course->id.'" />';
+    echo '<input type="hidden" name="returnto" value="'.s($PAGE->url->out(false)).'" />';
+    echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
+}
+
 echo $renderer->render_summary_table($table, $perpage);
+
+if ($bulkoperations) {
+    echo '<br /><div class="buttons"><div class="form-inline">';
+
+    $displaylist = [];
+    if (!empty($CFG->messaging)) {
+        $displaylist['#messageselect'] = get_string('messageselectadd');
+    }
+
+    echo html_writer::label(get_string('withselectedusers'), 'formactionid');
+    $selectactionparams = [
+        'id' => 'formactionid',
+        'class' => 'ml-2',
+        'data-action' => 'toggle',
+        'data-togglegroup' => 'summaryreport-table',
+        'data-toggle' => 'action',
+        'disabled' => true
+    ];
+    echo html_writer::select($displaylist, 'formaction', '', ['' => 'choosedots'], $selectactionparams);
+
+    echo '</div></div>';
+    echo '</form>';
+
+    $options = new stdClass();
+    $options->courseid = $course->id;
+    $options->noteStateNames = note_get_state_names();
+    $options->stateHelpIcon = $OUTPUT->help_icon('publishstate', 'notes');
+    $PAGE->requires->js_call_amd('core_user/participants', 'init', [$options]);
+}
 
 echo $OUTPUT->footer();
