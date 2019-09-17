@@ -182,7 +182,7 @@ class summary_table extends table_sql {
             'id' => 'user' . $data->userid,
             'name' => 'user' . $data->userid,
             'checked' => false,
-            'label' => $data->firstname . ' ' . $data->lastname,
+            'label' => get_string('selectitem', 'moodle', fullname($data)),
             'labelclasses' => 'accesshide',
         ]);
 
