@@ -89,38 +89,10 @@ $bulkoperations = !empty($CFG->messaging) && has_capability('moodle/course:bulkm
 $table = new \forumreport_summary\summary_table($courseid, $filters, $bulkoperations);
 $table->baseurl = $url;
 
-if ($bulkoperations) {
-    echo '<form action="action_redir.php" method="post" id="summaryreportform">';
-    echo '<input type="hidden" name="id" value="'.$course->id.'" />';
-    echo '<input type="hidden" name="returnto" value="'.s($PAGE->url->out(false)).'" />';
-    echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
-}
-
 echo $renderer->render_summary_table($table, $perpage);
 
 if ($bulkoperations) {
-    echo '<br /><div class="buttons"><div class="form-inline">';
-
-    echo html_writer::label(get_string('withselectedusers'), 'formactionid');
-    $displaylist = ['#messageselect' => get_string('messageselectadd')];
-    $selectactionparams = [
-        'id' => 'formactionid',
-        'class' => 'ml-2',
-        'data-action' => 'toggle',
-        'data-togglegroup' => 'summaryreport-table',
-        'data-toggle' => 'action',
-        'disabled' => true
-    ];
-    echo html_writer::select($displaylist, 'formaction', '', ['' => 'choosedots'], $selectactionparams);
-
-    echo '</div></div>';
-    echo '</form>';
-
-    $options = new stdClass();
-    $options->courseid = $course->id;
-    $options->noteStateNames = note_get_state_names();
-    $options->stateHelpIcon = $OUTPUT->help_icon('publishstate', 'notes');
-    $PAGE->requires->js_call_amd('core_user/participants', 'init', [$options]);
+    echo $renderer->render_bulk_action_menu();
 }
 
 echo $OUTPUT->footer();
