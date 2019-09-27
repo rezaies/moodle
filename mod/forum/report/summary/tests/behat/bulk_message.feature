@@ -33,6 +33,34 @@ Feature: Message users in the summary report
       | student1 | forum1 | discussion1 | s1 earliest     |
 
   @javascript
+  Scenario: Message some users
+    Given the following "users" exist:
+      | username | firstname | lastname | email                |
+      | student3 | Student   | 3        | student3@example.com |
+    And the following "course enrolments" exist:
+      | user     | course | role    |
+      | student3 | C1     | student |
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I follow "forum1"
+    And I navigate to "Summary report" in current page administration
+    And I click on "Select 'Student 1'" "checkbox"
+    And I click on "Select 'Student 3'" "checkbox"
+    And I set the field "With selected users..." to "Send a message"
+    And I set the field "bulk-message" to "blah blah"
+    And I click on "Send message to 2 people" "button"
+    Then I should see "Message sent to 2 people"
+    And I log out
+    And I log in as "student1"
+    And I should see "1" in the "//*[@title='Toggle messaging drawer']/../*[@data-region='count-container']" "xpath_element"
+    And I log out
+    And I log in as "student3"
+    And I should see "1" in the "//*[@title='Toggle messaging drawer']/../*[@data-region='count-container']" "xpath_element"
+    And I log out
+    And I log in as "student2"
+    And I should not see "1" in the "//*[@title='Toggle messaging drawer']/../*[@data-region='count-container']" "xpath_element"
+
+  @javascript
   Scenario: Message all users
     When I log in as "teacher1"
     And I am on "Course 1" course homepage
