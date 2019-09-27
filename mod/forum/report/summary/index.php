@@ -71,6 +71,7 @@ $PAGE->set_url($url);
 $PAGE->set_pagelayout('report');
 $PAGE->set_title($forumname);
 $PAGE->set_heading($course->fullname);
+$PAGE->navbar->add(get_string('nodetitle', "forumreport_summary"));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('summarytitle', 'forumreport_summary', $forumname), 2, 'p-b-2');
