@@ -63,12 +63,6 @@ class summary_table extends table_sql {
     protected $userid;
 
     /**
-     * @var bool Whether the table should be overridden to show the 'nothing to display' message.
-     * False unless checks confirm there will be nothing to display.
-     */
-    protected $nothingtodisplay = false;
-
-    /**
      * @var \core\log\sql_reader|null
      */
     protected $logreader = null;
@@ -495,12 +489,6 @@ class summary_table extends table_sql {
      */
     public function out($pagesize, $useinitialsbar, $downloadhelpbutton = ''): void {
         global $DB;
-
-        // If there is nothing to display, print the relevant string and return, no further action is required.
-        if ($this->nothingtodisplay) {
-            $this->print_nothing_to_display();
-            return;
-        }
 
         if (!$this->columns) {
             $sql = $this->get_full_sql();
