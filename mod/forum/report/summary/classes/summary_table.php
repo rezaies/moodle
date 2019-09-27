@@ -53,12 +53,6 @@ class summary_table extends table_sql {
     /** @var int The number of rows to be displayed per page. */
     protected $perpage = 25;
 
-    /** @var int The course ID being reported on. */
-    protected $courseid;
-
-    /** @var int The forum ID being reported on. */
-    protected $forumid;
-
     /** @var \stdClass The course module object of the forum being reported on. */
     protected $cm;
 
@@ -105,8 +99,6 @@ class summary_table extends table_sql {
         if (!has_capability('forumreport/summary:viewall', $this->context)) {
             $this->userid = $USER->id;
         }
-
-        $this->courseid = intval($courseid);
 
         $columnheaders = [];
 
@@ -459,7 +451,7 @@ class summary_table extends table_sql {
 
         $this->sql->params = [
             'component' => 'mod_forum',
-            'courseid' => $this->courseid,
+            'courseid' => $this->cm->course,
         ];
 
         // Handle if a user is limited to viewing their own summary.
