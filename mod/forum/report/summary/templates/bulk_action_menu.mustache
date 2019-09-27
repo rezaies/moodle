@@ -14,7 +14,7 @@ require(['jquery', 'core_message/message_send_bulk'], function($, BulkSender) {
         if (action.indexOf('#') !== -1) {
             e.preventDefault();
 
-            var ids = $('input.usercheckbox:checked').map(function(index, element) {
+            var ids = $('#summaryreport input.usercheckbox:checked').map(function(index, element) {
                 return element.name.replace('user', '');
             }).get();
 
