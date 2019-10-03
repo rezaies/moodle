@@ -2285,3 +2285,10 @@ $switch-transition: .2s all !default;
 .float-right {
     float: right !important; /* stylelint-disable-line declaration-no-important */
 }
+
+.toast-wrapper {
+    max-width: $toast-max-width;
+    // Place these above any modals and other elements.
+    z-index: 1051;
+}
+
