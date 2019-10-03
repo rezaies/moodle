@@ -721,6 +721,7 @@ $string['gradeforwholeforum'] = 'Grade for forum: {$a->str_long_grade}';
 $string['gradeforwholeforumhidden'] = 'Grade for forum hidden';
 $string['gradeitemnameforwholeforum'] = 'Whole forum grade for {$a->name}';
 $string['gradeitemnameforrating'] = 'Rating grade for {$a->name}';
+$string['grades:gradesavedfor'] = 'Grade saved for {$a->fullname}';
 
 // Deprecated since Moodle 3.8.
 $string['inpagereplysubject'] = 'Re: {$a}';
