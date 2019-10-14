@@ -78,8 +78,9 @@ class summary_table extends table_sql {
      * @param int $courseid The ID of the course the forum(s) exist within.
      * @param array $filters Report filters in the format 'type' => [values].
      * @param bool $bulkoperations Is the user allowed to perform bulk operations?
+     * @param bool $canexport Is the user allowed to export records?
      */
-    public function __construct(int $courseid, array $filters, bool $bulkoperations) {
+    public function __construct(int $courseid, array $filters, bool $bulkoperations, bool $canexport) {
         global $USER, $OUTPUT;
 
         $forumid = $filters['forums'][0];
@@ -122,6 +123,10 @@ class summary_table extends table_sql {
 
         $columnheaders['earliestpost'] = get_string('earliestpost', 'forumreport_summary');
         $columnheaders['latestpost'] = get_string('latestpost', 'forumreport_summary');
+
+        if ($canexport) {
+            $columnheaders['export'] = '';
+        }
 
         $this->define_columns(array_keys($columnheaders));
         $this->define_headers(array_values($columnheaders));
@@ -239,6 +244,23 @@ class summary_table extends table_sql {
         global $USER;
 
         return empty($data->latestpost) ? '-' : userdate($data->latestpost, "", \core_date::get_user_timezone($USER));
+    }
+
+    /**
+     * Generate the export column.
+     *
+     * @param \stdClass $data The row data.
+     * @return string The link to export content belonging to the row.
+     */
+    public function col_export(\stdClass $data): string {
+        global $OUTPUT;
+
+        $params = [
+            'id' => $this->cm->instance, // Forum id.
+            'userids[]' => $data->userid // User id.
+        ];
+
+        return $OUTPUT->action_link(new \moodle_url('/mod/forum/export.php', $params), get_string('export', 'mod_forum'));
     }
 
     /**
