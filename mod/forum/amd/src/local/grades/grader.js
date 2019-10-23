@@ -150,7 +150,7 @@ const displayGradingError = async(root, user, err) => {
  * @param {Function} setGradeForUser A function to set the grade for a specific user
  */
 export const launch = async(getListOfUsers, getContentForUser, getGradeForUser, setGradeForUser, {
-    initialUserId = null, moduleName
+    initialUserId = null, moduleName, sendStudentNotifications = false
 } = {}) => {
 
     const [
@@ -159,7 +159,7 @@ export const launch = async(getListOfUsers, getContentForUser, getGradeForUser, 
         userList,
     ] = await Promise.all([
         createFullScreenWindow({fullscreen: false, showLoader: false}),
-        Templates.render(templateNames.grader.app, {moduleName: moduleName}),
+        Templates.render(templateNames.grader.app, {moduleName: moduleName, defaultsendnotifications: sendStudentNotifications}),
         getListOfUsers(),
     ]);
     const graderContainer = graderLayout.getContainer();

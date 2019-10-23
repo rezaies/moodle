@@ -104,6 +104,7 @@ if ($capabilitymanager->can_grade($USER)) {
             'groupid' => $groupid,
             'gradingcomponent' => $forumgradeitem->get_grading_component_name(),
             'gradingcomponentsubtype' => $forumgradeitem->get_grading_component_subtype(),
+            'sendstudentnotifications' => $forum->should_notify_students_default_when_grade_for_forum(),
         ];
         $buttons[] = $OUTPUT->render_from_template('mod_forum/grades/grade_button', $gradeobj);
     }

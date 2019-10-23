@@ -117,7 +117,8 @@ const launchWholeForumGrading = async rootNode => {
         {
             groupid: data.groupid,
             initialUserId: data.initialuserid,
-            moduleName: data.name
+            moduleName: data.name,
+            sendStudentNotifications: data.sendStudentNotifications,
         }
     );
 };
