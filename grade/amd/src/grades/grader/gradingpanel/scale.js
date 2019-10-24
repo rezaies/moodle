@@ -29,7 +29,7 @@ import {invalidResult} from './normalise';
 
 export const fetchCurrentGrade = (...args) => fetchGrade('scale')(...args);
 
-export const storeCurrentGrade = (component, context, itemname, userId, rootNode) => {
+export const storeCurrentGrade = (component, context, itemname, userId, rootNode, notifyUser = false) => {
     const form = rootNode.querySelector('form');
     const grade = form.querySelector('input[name="grade"]');
 
@@ -37,5 +37,5 @@ export const storeCurrentGrade = (component, context, itemname, userId, rootNode
         return invalidResult;
     }
 
-    return saveGrade('scale')(component, context, itemname, userId, jQuery(form).serialize());
+    return saveGrade('scale')(component, context, itemname, userId, jQuery(form).serialize(), notifyUser);
 };
