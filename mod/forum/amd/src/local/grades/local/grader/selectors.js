@@ -38,5 +38,8 @@ export default {
         gradingPanel: getDataSelector('region', 'grade'),
         gradingPanelErrors: getDataSelector('region', 'grade-errors'),
     },
+    values: {
+        sendStudentNotifications: '[data-region="notification"] input[type="radio"]:checked',
+    }
 };
 
