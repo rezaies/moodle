@@ -41,7 +41,7 @@ export const fetchCurrentGrade = (component, contextid, itemname, gradeduserid) 
 };
 
 
-export const storeCurrentGrade = async(component, contextid, itemname, gradeduserid, rootNode) => {
+export const storeCurrentGrade = async(component, contextid, itemname, gradeduserid, rootNode, notifyuser = false) => {
     const form = rootNode.querySelector('form');
 
     return normaliseResult(await fetchMany([{
@@ -52,6 +52,7 @@ export const storeCurrentGrade = async(component, contextid, itemname, gradeduse
             itemname,
             gradeduserid,
             formdata: jQuery(form).serialize(),
+            notifyuser,
         },
     }])[0]);
 };
