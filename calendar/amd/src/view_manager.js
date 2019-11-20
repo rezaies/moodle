@@ -92,7 +92,8 @@ define([
                 var link = $(e.currentTarget);
 
                 if (view === 'month') {
-                    changeMonth(root, link.attr('href'), link.data('year'), link.data('month'), courseId, categoryId);
+                    changeMonth(root, link.attr('href'), link.data('year'), link.data('month'), courseId, categoryId,
+                        link.data('day'));
                     e.preventDefault();
                 } else if (view === 'day') {
                     changeDay(root, link.attr('href'), link.data('year'), link.data('month'), link.data('day'),
@@ -112,17 +113,19 @@ define([
          * @param {Number} courseid The id of the course whose events are shown
          * @param {Number} categoryid The id of the category whose events are shown
          * @param {object} target The element being replaced. If not specified, the calendarwrapper is used.
+         * @param {Number} day Day (optional)
          * @return {promise}
          */
-        var refreshMonthContent = function(root, year, month, courseid, categoryid, target) {
+        var refreshMonthContent = function(root, year, month, courseid, categoryid, target, day) {
             startLoading(root);
 
             target = target || root.find(CalendarSelectors.wrapper);
+            day = typeof day !== 'undefined' ? day : 1;
 
             M.util.js_pending([root.get('id'), year, month, courseid].join('-'));
             var includenavigation = root.data('includenavigation');
             var mini = root.data('mini');
-            return CalendarRepository.getCalendarMonthData(year, month, courseid, categoryid, includenavigation, mini)
+            return CalendarRepository.getCalendarMonthData(year, month, courseid, categoryid, includenavigation, mini, day)
                 .then(function(context) {
                     return Templates.render(root.attr('data-template'), context);
                 })
@@ -149,10 +152,12 @@ define([
          * @param {Number} month Month
          * @param {Number} courseid The id of the course whose events are shown
          * @param {Number} categoryid The id of the category whose events are shown
+         * @param {Number} day Day (optional)
          * @return {promise}
          */
-        var changeMonth = function(root, url, year, month, courseid, categoryid) {
-            return refreshMonthContent(root, year, month, courseid, categoryid)
+        var changeMonth = function(root, url, year, month, courseid, categoryid, day) {
+            day = typeof day !== 'undefined' ? day : 1;
+            return refreshMonthContent(root, year, month, courseid, categoryid, null, null, day)
                 .then(function() {
                     if (url.length && url !== '#') {
                         window.history.pushState({}, '', url);
@@ -176,6 +181,7 @@ define([
         var reloadCurrentMonth = function(root, courseId, categoryId) {
             var year = root.find(CalendarSelectors.wrapper).data('year');
             var month = root.find(CalendarSelectors.wrapper).data('month');
+            var day = root.find(CalendarSelectors.wrapper).data('day');
 
             if (typeof courseId === 'undefined') {
                 courseId = root.find(CalendarSelectors.wrapper).data('courseid');
@@ -185,7 +191,7 @@ define([
                 categoryId = root.find(CalendarSelectors.wrapper).data('categoryid');
             }
 
-            return refreshMonthContent(root, year, month, courseId, categoryId);
+            return refreshMonthContent(root, year, month, courseId, categoryId, null, null, day);
         };
 
 
