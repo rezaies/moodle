@@ -23,5 +23,6 @@
  */
 
 $string['nogateway'] = 'There is no gateway that can be used here.';
+$string['nogatewayselected'] = 'Select a gateway first.';
 $string['selectpaymenttype'] = 'Select Payment Type';
 $string['supportedcurrencies'] = 'Supported currencies';
