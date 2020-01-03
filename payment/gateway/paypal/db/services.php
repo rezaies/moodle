@@ -15,18 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Settings for the PayPal payment gateway
+ * External functions and service definitions for the PayPal payment gateway plugin.
  *
  * @package    pg_paypal
- * @copyright  2019 Shamim Rezaie <shamim@moodle.com>
+ * @copyright  2020 Shamim Rezaie <shamim@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_heading('pg_paypal_settings', '', get_string('pluginname_desc', 'pg_paypal')));
-
-    $settings->add(new admin_setting_configtext('pg_paypal/clientid', get_string('clientid', 'pg_paypal'),
-            get_string('clientid_desc', 'pg_paypal'), '', PARAM_TEXT));
-}
+$functions = [
+    'pg_paypal_get_sdk_url' => [
+        'classname'   => 'pg_paypal\external',
+        'methodname'  => 'get_sdk_url',
+        'classpath'   => '',
+        'description' => 'Generates and returns the URL of the PayPal JavaScript SDK',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
+];

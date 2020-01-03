@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['clientid'] = 'Client ID';
+$string['clientid_desc'] = 'The client ID that PayPal generated for your application.';
 $string['gatewaydescription'] = 'PayPal is an authorized payment gateway provider acting on behalf to process your credit card transactions.';
 $string['gatewayname'] = 'PayPal';
 $string['pluginname'] = 'PayPal';
