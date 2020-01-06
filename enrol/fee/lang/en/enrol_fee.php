@@ -48,6 +48,7 @@ $string['mailteachers'] = 'Notify teachers';
 $string['nocost'] = 'There is no cost associated with enrolling in this course!';
 $string['pluginname'] = 'Fee';
 $string['pluginname_desc'] = 'The fee module allows you to set up paid courses.  If the cost for any course is zero, then students are not asked to pay for entry.  There is a site-wide cost that you set here as a default for the whole site and then a course setting that you can set for each course individually. The course cost overrides the site cost.';
+$string['purchasedescription'] = 'Enrolment in course {$a}';
 $string['sendpaymentbutton'] = 'Pay enrolment fee';
 $string['status'] = 'Allow fee enrolments';
 $string['status_desc'] = 'Allow users to use fee to enrol into a course by default.';
