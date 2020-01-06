@@ -27,6 +27,20 @@ import Ajax from 'core/ajax';
 /**
  * Return the PayPal JavaScript SDK URL.
  *
+ * @returns {Promise<{clientid: String, brandname: String}>}
+ */
+export const getConfigForJs = () => {
+    const request = {
+        methodname: 'pg_paypal_get_config_for_js',
+        args: {},
+    };
+
+    return Ajax.call([request])[0];
+};
+
+/**
+ * Return the PayPal JavaScript SDK URL.
+ *
  * @param currency
  * @returns {Promise<String>}
  */

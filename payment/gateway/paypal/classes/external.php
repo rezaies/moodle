@@ -29,12 +29,48 @@ namespace pg_paypal;
 use external_api;
 use external_function_parameters;
 use external_value;
+use external_single_structure;
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/externallib.php');
 
 class external extends external_api {
+
+    /**
+     * Returns description of method parameters.
+     *
+     * @return external_function_parameters
+     */
+    public static function get_config_for_js_parameters(): external_function_parameters {
+        return new external_function_parameters([]);
+    }
+
+    /**
+     * Returns the full URL of the PayPal JavaScript SDK.
+     *
+     * @return string[]
+     */
+    public static function get_config_for_js(): array {
+        $config = get_config('pg_paypal');
+
+        return [
+            'clientid' => $config->clientid,
+            'brandname' => $config->brandname,
+        ];
+    }
+
+    /**
+     * Returns description of method result value.
+     *
+     * @return external_single_structure
+     */
+    public static function get_config_for_js_returns(): external_single_structure {
+        return new external_single_structure([
+                'clientid' => new external_value(PARAM_TEXT, 'PayPal client ID'),
+                'brandname' => new external_value(PARAM_TEXT, 'Brand name'),
+        ]);
+    }
 
     /**
      * Returns description of method parameters.

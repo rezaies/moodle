@@ -25,6 +25,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 $functions = [
+    'pg_paypal_get_config_for_js' => [
+        'classname'   => 'pg_paypal\external',
+        'methodname'  => 'get_config_for_js',
+        'classpath'   => '',
+        'description' => 'Returns the configuration settings to be used in js',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
     'pg_paypal_get_sdk_url' => [
         'classname'   => 'pg_paypal\external',
         'methodname'  => 'get_sdk_url',
