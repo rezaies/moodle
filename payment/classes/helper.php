@@ -113,4 +113,40 @@ class helper {
             'data-description' => $description,
         ];
     }
+
+    /**
+     * Asks the cost from the related component.
+     *
+     * @param string $component Name of the component that the componentid belongs to
+     * @param int $componentid An internal identifier that is used by the component
+     * @return array['amount' => float, 'currency' => string]
+     * @throws \moodle_exception
+     */
+    public static function get_cost(string $component, int $componentid): array {
+        $cost = component_callback($component, 'core_payment_get_cost', [$componentid]);
+
+        if ($cost === null) {
+            throw new \moodle_exception('callbacknotimplemented', 'core_payment', '', $component);
+        }
+
+        return $cost;
+    }
+
+    /**
+     * Delivers what the user paid for.
+     *
+     * @param string $component Name of the component that the componentid belongs to
+     * @param int $componentid An internal identifier that is used by the component
+     * @return bool Whether successful or not
+     * @throws \moodle_exception
+     */
+    public static function deliver_order(string $component, int $componentid): bool {
+        $result = component_callback($component, 'core_payment_deliver_order', [$componentid]);
+
+        if ($result === null) {
+            throw new \moodle_exception('callbacknotimplemented', 'core_payment', '', $component);
+        }
+
+        return $result;
+    }
 }
