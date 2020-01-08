@@ -418,3 +418,46 @@ class enrol_fee_plugin extends enrol_plugin {
         return has_capability('enrol/fee:config', $context);
     }
 }
+
+/**
+ * Callback function that returns the enrolment cost for the course that $instanceid enrolment instance belongs to.
+ *
+ * @param int $instanceid The enrolment instance id
+ * @return array['amount' => float, 'currency' => string]
+ */
+function enrol_fee_core_payment_get_cost(int $instanceid): array {
+    global $DB;
+
+    $instance = $DB->get_record('enrol', ['enrol' => 'fee', 'id' => $instanceid], '*', MUST_EXIST);
+
+    return [
+        'amount' => (float)$instance->cost,
+        'currency' => $instance->currency,
+    ];
+}
+
+/**
+ * Callback function that delivers what the user paid for to them.
+ *
+ * @param int $instanceid The enrolment instance id
+ * @return bool Whether successful or not
+ */
+function enrol_fee_core_payment_deliver_order(int $instanceid): bool {
+    global $DB, $USER;
+
+    $instance = $DB->get_record('enrol', ['enrol' => 'fee', 'id' => $instanceid], '*', MUST_EXIST);
+
+    $plugin = enrol_get_plugin('fee');
+
+    if ($instance->enrolperiod) {
+        $timestart = time();
+        $timeend   = $timestart + $instance->enrolperiod;
+    } else {
+        $timestart = 0;
+        $timeend   = 0;
+    }
+
+    $plugin->enrol_user($instance, $USER->id, $instance->roleid, $timestart, $timeend);
+
+    return true;
+}
