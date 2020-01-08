@@ -41,4 +41,13 @@ $functions = [
         'type'        => 'read',
         'ajax'        => true,
     ],
+    'pg_paypal_transaction_complete' => [
+        'classname'   => 'pg_paypal\external',
+        'methodname'  => 'transaction_complete',
+        'classpath'   => '',
+        'description' => 'Takes care of what needs to be done when a PayPal transaction comes back as complete.',
+        'type'        => 'write',
+        'ajax'        => true,
+        'loginrequired' => false,
+    ],
 ];
