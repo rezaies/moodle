@@ -122,7 +122,6 @@ class external extends external_api {
             'component' => new external_value(PARAM_COMPONENT, 'The component name'),
             'componentid' => new external_value(PARAM_INT, 'The item id in the context of the component'),
             'orderid' => new external_value(PARAM_TEXT, 'The order id coming back from PayPal'),
-            'authorizationid' => new external_value(PARAM_TEXT, 'The authorization id coming back from PayPal'),
         ]);
     }
 
@@ -133,18 +132,15 @@ class external extends external_api {
      * @param string $component Name of the component that the componentid belongs to
      * @param int $componentid An internal identifier that is used by the component
      * @param string $orderid PayPal order ID
-     * @param string $authorizationid The PayPal-generated ID for the authorized payment
      * @return array
      */
-    public static function transaction_complete(string $component, int $componentid, string $orderid,
-            string $authorizationid): array {
+    public static function transaction_complete(string $component, int $componentid, string $orderid): array {
         global $USER, $DB;
 
         self::validate_parameters(self::transaction_complete_parameters(), [
             'component' => $component,
             'componentid' => $componentid,
             'orderid' => $orderid,
-            'authorizationid' => $authorizationid,
         ]);
 
         $config = get_config('pg_paypal');
@@ -157,49 +153,53 @@ class external extends external_api {
         ] = \core_payment\helper::get_cost($component, $componentid);
 
         $paypalhelper = new paypal_helper($config->clientid, $config->secret, $sandbox);
-        $authorization = $paypalhelper->capture_authorization($authorizationid, $amount, $currency);
+        $orderdetails = $paypalhelper->get_order_details($orderid);
 
         $success = false;
         $message = '';
 
-        if ($authorization) {
-            switch ($authorization['status']) {
-                case 'COMPLETED':
-                    $success = true;
-                    // Everything is correct. Let's give them what they paid for.
-                    try {
-                        \core_payment\helper::deliver_order($component, $componentid);
+        if ($orderdetails) {
+            if ($orderdetails['status'] == 'APPROVED' && $orderdetails['intent'] == 'CAPTURE') {
+                $item = $orderdetails['purchase_units'][0];
+                if ($item['amount']['value'] == $amount && $item['amount']['currency_code'] == $currency) {
+                    $capture = $paypalhelper->capture_order($orderid);
+                    if ($capture && $capture['status'] == 'COMPLETED') {
+                        $success = true;
+                        // Everything is correct. Let's give them what they paid for.
+                        try {
+                            \core_payment\helper::deliver_order($component, $componentid);
 
-                        $paymentid = \core_payment\helper::save_payment($component, $componentid, (int)$USER->id, $amount, $currency,
-                                'paypal');
+                            $paymentid = \core_payment\helper::save_payment($component, $componentid, (int)$USER->id, $amount,
+                                    $currency, 'paypal');
 
-                        // Store PayPal extra information.
-                        $record = new \stdClass();
-                        $record->paymentid = $paymentid;
-                        $record->pp_orderid = $orderid;
-                        $record->pp_authorizationid = $authorizationid;
-                        $record->pp_paymentid = $authorization->id; // The PayPal-generated ID for the captured payment.
-                        $record->pp_status = 'COMPLETED';
+                            // Store PayPal extra information.
+                            $record = new \stdClass();
+                            $record->paymentid = $paymentid;
+                            $record->pp_orderid = $orderid;
+                            $record->pp_status = 'COMPLETED';
 
-                        $DB->insert_record('pg_paypal', $record);
-                    } catch (\Exception $e) {
-                        debugging('Exception while trying to process payment: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                            $DB->insert_record('pg_paypal', $record);
+                        } catch (\Exception $e) {
+                            debugging('Exception while trying to process payment: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                            $success = false;
+                            $message = get_string('internalerror', 'pg_paypal');
+                        }
+                    } else {
                         $success = false;
-                        $message = get_string('internalerror', 'pg_paypal');
+                        $message = get_string('paymentnotcleared', 'pg_paypal');
                     }
-                    break;
-                case 'PENDING':
+                } else {
                     $success = false;
-                    $message = get_string('echecknotsupported', 'pg_paypal');
-                    break;
-                default:
-                    $success = false;
-                    $message = get_string('paymentnotcleared', 'pg_paypal');
+                    $message = get_string('amountmismatch', 'pg_paypal');
+                }
+            } else {
+                $success = false;
+                $message = get_string('paymentnotcleared', 'pg_paypal');
             }
         } else {
             // Could not capture authorization!
             $success = false;
-            $message = get_string('captureauthorizationfailed', 'pg_paypal');
+            $message = get_string('cannotfetchorderdatails', 'pg_paypal');
         }
 
         return [
