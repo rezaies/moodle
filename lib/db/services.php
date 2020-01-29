@@ -2651,6 +2651,14 @@ $functions = array(
         'type'        => 'write',
         'ajax'        => 'true'
     ),
+    'core_payment_get_gateways_supporting_currency' => [
+        'classname'   => 'core_payment\external',
+        'methodname'  => 'get_gateways_supporting_currency',
+        'classpath'   => '',
+        'description' => 'Get the list of payment gateways that support the given currency',
+        'type'        => 'read',
+        'ajax'        => 'true',
+    ],
     'core_h5p_get_trusted_h5p_file' => [
         'classname'     => 'core_h5p\external',
         'methodname'    => 'get_trusted_h5p_file',
