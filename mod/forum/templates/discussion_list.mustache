@@ -243,16 +243,24 @@
                                                 <a href="{{latestpostauthor.urls.profile}}">{{latestpostauthor.fullname}}</a>
                                             </div>
                                             <div>
-                                                <a href="{{{discussion.urls.viewlatest}}}">{{#userdate}}
-                                                    {{discussion.times.modified}}, {{#str}}strftimerecentfull{{/str}}
-                                                {{/userdate}}</a>
+                                                <a href="{{{discussion.urls.viewlatest}}}">
+                                                    {{< core/time_element }}
+                                                        {{$elementid}}modified-{{discussion.id}}{{/elementid}}
+                                                        {{$timestampval}}{{discussion.times.modified}}{{/timestampval}}
+                                                        {{$userdateformatval}}{{#str}}strftimerecentfull{{/str}}{{/userdateformatval}}
+                                                    {{/ core/time_element }}
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
                                 {{/latestpostid}}
                             </td>
                             <td class="text-left align-middle">
-                                {{#userdate}}{{discussion.times.created}}, {{#str}}strftimerecentfull{{/str}}{{/userdate}}
+                                {{< core/time_element }}
+                                    {{$elementid}}created-{{discussion.id}}{{/elementid}}
+                                    {{$timestampval}}{{discussion.times.created}}{{/timestampval}}
+                                    {{$userdateformatval}}{{#str}}strftimerecentfull{{/str}}{{/userdateformatval}}
+                                {{/core/time_element}}
                             </td>
                             <td class="timed p-0 text-center align-middle">
                                 {{#discussion.timed.istimed}}
