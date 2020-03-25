@@ -243,16 +243,20 @@
                                                 <a href="{{latestpostauthor.urls.profile}}">{{latestpostauthor.fullname}}</a>
                                             </div>
                                             <div>
-                                                <a href="{{{discussion.urls.viewlatest}}}">{{#userdate}}
-                                                    {{discussion.times.modified}}, {{#str}}strftimerecentfull{{/str}}
-                                                {{/userdate}}</a>
+                                                <a href="{{{discussion.urls.viewlatest}}}">
+                                                    <time datetime="{{#userdate}}{{discussion.times.modified}}, %Y-%m-%dT%H:%M%z, calendartype_gregorian{{/userdate}}">
+                                                        {{#userdate}}{{discussion.times.modified}}, {{#str}}strftimerecentfull{{/str}}{{/userdate}}
+                                                    </time>
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
                                 {{/latestpostid}}
                             </td>
                             <td class="text-left align-middle">
-                                {{#userdate}}{{discussion.times.created}}, {{#str}}strftimerecentfull{{/str}}{{/userdate}}
+                                <time datetime="{{#userdate}}{{discussion.times.created}}, %Y-%m-%dT%H:%M%z, calendartype_gregorian{{/userdate}}">
+                                    {{#userdate}}{{discussion.times.created}}, {{#str}}strftimerecentfull{{/str}}{{/userdate}}
+                                </time>
                             </td>
                             <td class="timed p-0 text-center align-middle">
                                 {{#discussion.timed.istimed}}
