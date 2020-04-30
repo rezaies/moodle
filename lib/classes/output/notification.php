@@ -56,6 +56,11 @@ class notification implements \renderable, \templatable {
     const NOTIFY_ERROR = 'error';
 
     /**
+     * A notification of level 'error'.
+     */
+    const NOTIFY_CTA = 'cta';
+
+    /**
      * @var string Message payload.
      */
     protected $message = '';
@@ -71,7 +76,7 @@ class notification implements \renderable, \templatable {
     protected $announce = true;
 
     /**
-     * @var bool $closebutton Whether this notification should inlcude a button to dismiss itself.
+     * @var bool $closebutton Whether this notification should include a button to dismiss itself.
      */
     protected $closebutton = true;
 
@@ -79,6 +84,11 @@ class notification implements \renderable, \templatable {
      * @var array $extraclasses A list of any extra classes that may be required.
      */
     protected $extraclasses = array();
+
+    /**
+     * @var bool $rawmessage Whether the message should be shown raw, or be cleaned.
+     */
+    protected $rawmessage = false;
 
     /**
      * Notification constructor.
@@ -109,7 +119,7 @@ class notification implements \renderable, \templatable {
     }
 
     /**
-     * Set whether this notification should include a button to disiss itself.
+     * Set whether this notification should include a button to dismiss itself.
      *
      * @param bool $button
      * @return $this
@@ -130,6 +140,15 @@ class notification implements \renderable, \templatable {
         $this->extraclasses = $classes;
 
         return $this;
+    }
+
+    /**
+     * Set whether the message of this notification should be shown raw, or be cleaned.
+     *
+     * @param bool $rawmessage
+     */
+    public function set_show_rawmessage(bool $rawmessage): void {
+        $this->rawmessage = $rawmessage;
     }
 
     /**
@@ -158,14 +177,15 @@ class notification implements \renderable, \templatable {
      */
     public function export_for_template(\renderer_base $output) {
         return array(
-            'message'       => clean_text($this->message),
+            'message'       => $this->rawmessage ? $this->message : clean_text($this->message),
             'extraclasses'  => implode(' ', $this->extraclasses),
             'announce'      => $this->announce,
             'closebutton'   => $this->closebutton,
-            'issuccess'         => $this->messagetype === 'success',
-            'isinfo'            => $this->messagetype === 'info',
-            'iswarning'         => $this->messagetype === 'warning',
-            'iserror'           => $this->messagetype === 'error',
+            'issuccess'     => $this->messagetype === self::NOTIFY_SUCCESS,
+            'isinfo'        => $this->messagetype === self::NOTIFY_INFO,
+            'iswarning'     => $this->messagetype === self::NOTIFY_WARNING,
+            'iserror'       => $this->messagetype === self::NOTIFY_ERROR,
+            'iscta'         => $this->messagetype === self::NOTIFY_CTA,
         );
     }
 
@@ -176,6 +196,7 @@ class notification implements \renderable, \templatable {
             'info'              => 'core/notification_info',
             'warning'           => 'core/notification_warning',
             'error'             => 'core/notification_error',
+            'cta'               => 'core/notification_cta',
         ];
 
         if (isset($templatemappings[$this->messagetype])) {

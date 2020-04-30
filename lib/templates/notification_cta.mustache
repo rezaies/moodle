@@ -15,11 +15,11 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template core/notification
+    @template core/notification_cta
 
-    Moodle notification template.
+    Moodle cta notification template.
 
-    The purpose of this template is to render a notification using other notification templates.
+    The purpose of this template is to render a call to action notification.
 
     Classes required for JS:
     * none
@@ -30,24 +30,27 @@
     Context variables required for this template:
     * message A cleaned string (use clean_text()) to display.
     * extraclasses Additional classes to apply to the notification.
-    * closebutton Whether a close button should be displayed to dismiss the message.
-    * announce Whether the notification should be announced to screen readers.
+    * actions List of action links.
+    * icon An icon.pix and icon.componrnt for the icon to be displauyed as the icon of CTA notification.
 
     Example context (json):
-    { "message": "Your pants are on fire!", "closebutton": 1, "announce": 1, "extraclasses": "foo bar", "issuccess": 1}
+    {
+        "message": "What do you think about Moodle?",
+        "actions": [
+            {
+                "title": "Give feedback",
+                "url": "#",
+                "data": [
+                    {"name": "action", "value": "give"},
+                    {"name": "contextid", "value": "3"}
+                ]
+            }
+        ]
+    }
 }}
-{{#issuccess}}
-    {{> core/notification_success}}
-{{/issuccess}}
-{{#isinfo}}
-    {{> core/notification_info}}
-{{/isinfo}}
-{{#iswarning}}
-    {{> core/notification_warning}}
-{{/iswarning}}
-{{#iserror}}
-    {{> core/notification_error}}
-{{/iserror}}
-{{#iscta}}
-    {{> core/notification_cta}}
-{{/iscta}}
+
+<div class="cta alert alert-primary alert-block fade in {{ extraclasses }}" {{!
+    }}{{# announce }} role="alert" data-aria-autofocus="true"{{/ announce }}{{!
+    }}>
+    {{{ message }}}
+</div>

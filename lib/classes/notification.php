@@ -50,6 +50,11 @@ class notification {
     const ERROR = 'error';
 
     /**
+     * A notification of type 'call to action'.
+     */
+    const CTA = 'cta';
+
+    /**
      * Add a message to the session notification stack.
      *
      * @param string $message The message to add to the stack
@@ -62,8 +67,13 @@ class notification {
             // Currently in the page body - just render and exit immediately.
             // We insert some code to immediately insert this into the user-notifications created by the header.
             $id = uniqid();
+            $renderable = new \core\output\notification($message, $level);
+            if ($level == self::CTA) {
+                $renderable->set_show_rawmessage(true);
+                $renderable->set_announce(false);
+            }
             echo \html_writer::span(
-                $PAGE->get_renderer('core')->render(new \core\output\notification($message, $level)),
+                $PAGE->get_renderer('core')->render($renderable),
                 '', array('id' => $id));
 
             // Insert this JS here using a script directly rather than waiting for the page footer to load to avoid
@@ -97,6 +107,35 @@ class notification {
     }
 
     /**
+     * Add a call to action notification to the page.
+     *
+     * @param string $message The message to display.
+     * @param string[] $icon The icon to use. Required keys are 'pix' and 'component'.
+     * @param array $actions An array of action links
+     */
+    public static function cta(string $message, array $icon, array $actions): void {
+        global $OUTPUT;
+
+        $context = new stdClass();
+        $context->icon = $icon;
+        $context->message = $message;
+
+        $context->actions = array_map(function($action) {
+            $data = [];
+            foreach ($action['data'] as $name => $value) {
+                $data[] = ['name' => $name, 'value' => $value];
+            }
+            $action['data'] = $data;
+
+            return $action;
+        }, $actions);
+
+        $content = $OUTPUT->render_from_template('core/notification_cta_content', $context);
+
+        self::add($content, self::CTA);
+    }
+
+    /**
      * Fetch all of the notifications in the stack and clear the stack.
      *
      * @return array All of the notifications in the stack
@@ -114,6 +153,10 @@ class notification {
         $renderables = [];
         foreach ($notifications as $notification) {
             $renderable = new \core\output\notification($notification->message, $notification->type);
+            if ($notification->type == self::CTA) {
+                $renderable->set_show_rawmessage(true);
+                $renderable->set_announce(false);
+            }
             $renderables[] = $renderable;
         }
 
