@@ -434,6 +434,8 @@ $string['cronremotepassword'] = 'Cron password for remote access';
 $string['cronwarning'] = 'The <a href="{$a->url}">admin/cron.php script</a> has not been run for {$a->actual} and should run every {$a->expected}.';
 $string['cronwarningcli'] = 'The <code>admin/cli/cron.php</code> script has not been run for {$a->actual} and should run every {$a->expected}.';
 $string['cronwarningnever'] = 'The <code>admin/cli/cron.php</code> script has never been run and should run every {$a->expected}.';
+$string['ctafeedbackfrequency'] = 'Next feedback reminder';
+$string['ctafeedbackfrequency_desc'] = 'Remind students again to give feedback after the given number of days.';
 $string['ctyperequired'] = 'The ctype PHP extension is now required by Moodle, in order to improve site performance and to offer multilingual compatibility.';
 $string['curlsecurityallowedport'] = 'cURL allowed ports list';
 $string['curlsecurityallowedportsyntax'] = 'List of port numbers that cURL can connect to. Valid entries are integer numbers only. Put each entry on a new line. If left empty, then all ports are allowed. If set, in almost all cases, both 443 and 80 should be specified for cURL to connect to standard HTTPS and HTTP ports.';
@@ -535,6 +537,8 @@ $string['enablecourserelativedates_desc'] = 'Allow courses to be set up to displ
 $string['enablecourserequests'] = 'Enable course requests';
 $string['enabled'] = 'Enabled';
 $string['enabledevicedetection'] = 'Enable device detection';
+$string['enablectafeedback'] = 'Enable call to feedback';
+$string['enablectafeedback_desc'] = 'If enabled, users can give feedback on Moodle LMS to moodle.org.';
 $string['enableglobalsearch'] = 'Enable global search';
 $string['enableglobalsearch_desc'] = 'If enabled, data will be indexed and synchronised by a scheduled task.';
 $string['enablegravatar'] = 'Enable Gravatar';
