@@ -2773,6 +2773,15 @@ $functions = array(
         'ajax'          => 'true',
         'capabilities'  => 'moodle/contentbank:deleteanycontent',
     ],
+    'core_cta_feedback_record_action' => [
+        'classname'     => 'core\local\cta\feedback\external',
+        'methodname'    => 'record_action',
+        'classpath'     => '',
+        'description'   => 'Record user\'s action for future use',
+        'type'          => 'write',
+        'ajax'          => 'true',
+        'capabilities'  => '',
+    ],
 );
 
 $services = array(
