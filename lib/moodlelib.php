@@ -10597,3 +10597,46 @@ function site_is_public() {
 
     return $ispublic;
 }
+
+function print_feedback_reminder_block() {
+    global $PAGE;
+
+    $actions = [
+        [
+            'title' => get_string('calltofeedback_give'),
+            'url' => '#',
+            'data' => [
+                'action' => 'give',
+            ],
+        ],
+        [
+            'title' => get_string('calltofeedback_remind'),
+            'url' => '#',
+            'data' => [
+                'action' => 'remind',
+            ],
+        ],
+    ];
+    $icon = [
+        'pix' => 'i/bullhorn',
+        'component' => 'core'
+    ];
+
+    //set_user_preference('core_cta_feedback', true);
+    \core\notification::add_call_to_action($icon, get_string('calltofeedback'), $actions);
+    $PAGE->requires->js_call_amd('core/cta_feedback', 'registerActions', ['.cta.alert']);
+}
+
+function should_display_cta_feedback(): bool {
+    global $CFG;
+
+    if ($CFG->enablectafeedback) {
+        $give = get_user_preferences('core_cta_feedback_give');
+        $remind = get_user_preferences('core_cta_feedback_remind');
+
+        $lastactiontime = max($give ?: 0, $remind ?: 0);
+        return $lastactiontime + ($CFG->ctafeedbackfrequency * DAYSECS) < time();
+    } else {
+        return false;
+    }
+}
