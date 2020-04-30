@@ -530,6 +530,21 @@ define('EMAIL_VIA_ALWAYS', 1);
  */
 define('EMAIL_VIA_NO_REPLY_ONLY', 2);
 
+/**
+ * Ask user to give feedback a few days after each major upgrade.
+ */
+define('USERFEEDBACK_AFTER_UPGRADE', 1);
+
+/**
+ * Ask user to give feedback periodically.
+ */
+define('USERFEEDBACK_PERIODICALLY', 2);
+
+/**
+ * Do not ask user to give feedback.
+ */
+define('USERFEEDBACK_NEVER', 3);
+
 // PARAMETER HANDLING.
 
 /**
