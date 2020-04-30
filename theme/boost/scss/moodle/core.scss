@@ -2574,3 +2574,21 @@ $picker-emojis-per-row: 7 !default;
         z-index: inherit;
     }
 }
+
+.alert.cta {
+    .icon {
+        font-size: 32px;
+        height: 32px;
+        width: 32px;
+        padding: 5px;
+        &.fa {
+            border-radius: 50%;
+            border-style: solid;
+            border-width: 2px;
+        }
+    }
+
+    a {
+        text-decoration: underline;
+    }
+}

@@ -171,4 +171,31 @@ class notification {
     public static function error($message) {
         return self::add($message, self::ERROR);
     }
+
+    /**
+     * Add a call to action notification to the page.
+     *
+     * @param string[] $icon The icon to use. Required keys are 'pix' and 'component'.
+     * @param string $message The message to display.
+     * @param array $actions An array of action links
+     */
+    public static function add_call_to_action(array $icon, string $message, array $actions) {
+        global $OUTPUT;
+
+        $context = new stdClass();
+        $context->icon = $icon;
+        $context->message = $message;
+
+        $context->actions = array_map(function($action) {
+            $data = [];
+            foreach ($action['data'] as $name => $value) {
+                $data[] = ['name' => $name, 'value' => $value];
+            }
+            $action['data'] = $data;
+
+            return $action;
+        }, $actions);
+
+        echo $OUTPUT->render_from_template('core/local/notification/cta', $context);
+    }
 }
