@@ -2459,3 +2459,19 @@ $picker-emojis-per-row: 7 !default;
         color: darken(theme-color-level($color, $alert-color-level), 10%);
     }
 }
+
+.alert.cta {
+    .fa.icon {
+        font-size: 32px;
+        height: 32px;
+        width: 32px;
+        border-radius: 50%;
+        border-style: solid;
+        border-width: 2px;
+        padding: 5px;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+}
