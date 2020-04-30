@@ -10645,3 +10645,83 @@ function site_is_public() {
 
     return $ispublic;
 }
+
+/**
+ * Displays the feedback reminder block.
+ */
+function print_feedback_reminder_block() {
+    global $PAGE;
+
+    $actions = [
+        [
+            'title' => get_string('calltofeedback_give'),
+            'url' => '#',
+            'data' => [
+                'action' => 'give',
+            ],
+        ],
+        [
+            'title' => get_string('calltofeedback_remind'),
+            'url' => '#',
+            'data' => [
+                'action' => 'remind',
+            ],
+        ],
+    ];
+    $icon = [
+        'pix' => 'i/bullhorn',
+        'component' => 'core'
+    ];
+
+    \core\notification::add_call_to_action($icon, get_string('calltofeedback'), $actions);
+    $PAGE->requires->js_call_amd('core/userfeedback', 'registerActions', ['.cta.alert']);
+}
+
+/**
+ * Indicates whether the feedback reminder block should be shown or not.
+ *
+ * @return bool
+ */
+function should_display_cta_feedback(): bool {
+    global $CFG;
+
+    if ($CFG->enableuserfeedback) {
+        $give = get_user_preferences('core_userfeedback_give');
+        $remind = get_user_preferences('core_userfeedback_remind');
+
+        $lastactiontime = max($give ?: 0, $remind ?: 0);
+
+        switch ($CFG->userfeedback_nextreminder) {
+            case USERFEEDBACK_AFTER_UPGRADE:
+                $lastupgrade = last_major_upgrade_time();
+                if ($lastupgrade >= $lastactiontime) {
+                    return $lastupgrade + ($CFG->userfeedback_remindafter * DAYSECS) < time();
+                }
+                break;
+            case USERFEEDBACK_PERIODICALLY:
+                return $lastactiontime + ($CFG->userfeedback_remindafter * DAYSECS) < time();
+                break;
+        }
+    }
+    return false;
+}
+
+/**
+ * Returns the last major upgrade time
+ * @return int
+ */
+function last_major_upgrade_time(): int {
+    global $DB;
+
+    $targetversioncast = $DB->sql_cast_char2real('targetversion');
+    $versioncast = $DB->sql_cast_char2real('version');
+
+    // A time difference more than 3 months has to be a core upgrade.
+    $time = $DB->get_field_sql("SELECT timemodified
+                                  FROM {upgrade_log}
+                                 WHERE plugin = 'core' AND $targetversioncast - $versioncast > 30000
+                              ORDER BY timemodified DESC
+                                 LIMIT 1");
+
+    return (int)$time;
+}
