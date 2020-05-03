@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/externallib.php");
 
+use core_h5p\core;
 use external_api;
 use external_function_parameters;
 use external_value;
@@ -125,6 +126,7 @@ class external extends external_api {
         return new external_function_parameters(
                 [
                     'action' => new external_value(PARAM_ALPHA, 'The action taken by user'),
+                    'contextid' => new external_value(PARAM_INT, 'The context id of the page the user is in'),
                 ]
         );
     }
@@ -133,17 +135,28 @@ class external extends external_api {
      * Record users action to the feedback CTA
      *
      * @param string $action The action the user took
+     * @param int $contextid The context id
      * @throws \invalid_parameter_exception
      */
-    public static function record_action(string $action) {
-        external_api::validate_parameters(self::record_action_parameters(), ['action' => $action]);
+    public static function record_action(string $action, int $contextid) {
+        external_api::validate_parameters(self::record_action_parameters(), [
+            'action' => $action,
+            'contextid' => $contextid
+        ]);
+
+        $context = \context::instance_by_id($contextid);
+        self::validate_context($context);
 
         switch ($action) {
             case 'give':
                 set_user_preference('core_cta_feedback_give', time());
+                $event = \core\event\cta_feedback_given::create(['context' => $context]);
+                $event->trigger();
                 break;
             case 'remind':
                 set_user_preference('core_cta_feedback_remind', time());
+                $event = \core\event\cta_feedback_remind::create(['context' => $context]);
+                $event->trigger();
                 break;
             default:
                 throw new \invalid_parameter_exception('Invalid value for action parameter (value: ' . $action . '),' .
