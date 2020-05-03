@@ -2809,6 +2809,15 @@ $functions = array(
         'ajax'          => 'true',
         'capabilities'  => '',
     ],
+    'core_get_userfeedback_data' => [
+        'classname'     => 'core\external\userfeedback\get_data',
+        'methodname'    => 'execute',
+        'classpath'     => '',
+        'description'   => 'Return all data needed to be sent to the feedback site',
+        'type'          => 'read',
+        'ajax'          => 'true',
+        'capabilities'  => '',
+    ],
 );
 
 $services = array(
