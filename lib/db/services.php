@@ -2782,6 +2782,15 @@ $functions = array(
         'ajax'          => 'true',
         'capabilities'  => '',
     ],
+    'core_cta_feedback_get_feedback_data' => [
+        'classname'     => 'core\local\cta\feedback\external',
+        'methodname'    => 'get_feedback_data',
+        'classpath'     => '',
+        'description'   => 'Return all data needed to be sent to the feedback site',
+        'type'          => 'read',
+        'ajax'          => 'true',
+        'capabilities'  => '',
+    ],
 );
 
 $services = array(
