@@ -817,7 +817,7 @@ class core_renderer extends renderer_base {
      * @return string HTML fragment.
      */
     public function standard_footer_html() {
-        global $CFG, $SCRIPT;
+        global $CFG, $SCRIPT, $PAGE;
 
         $output = '';
         if (during_initial_install()) {
@@ -833,6 +833,14 @@ class core_renderer extends renderer_base {
             foreach ($plugins as $function) {
                 $output .= $function();
             }
+        }
+
+        if (should_display_cta_feedback()) {
+            $output .= html_writer::div(
+                    $this->render_from_template('core/local/cta/feedback_link', []),
+                    'cta_feedback_placeholder'
+            );
+            $PAGE->requires->js_call_amd('core/cta_feedback', 'registerFeedbackLink', ['.cta_feedback_placeholder']);
         }
 
         // This function is normally called from a layout.php file in {@link core_renderer::header()}
