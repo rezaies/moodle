@@ -10665,6 +10665,8 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'give',
+                'record' => 1,
+                'hide' => 1,
             ],
         ],
         [
@@ -10672,6 +10674,8 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'remind',
+                'record' => 1,
+                'hide' => 1,
             ],
         ],
     ];
