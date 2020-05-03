@@ -163,6 +163,10 @@ if (empty($CFG->forcedefaultmymoodle) && $PAGE->user_allowed_editing()) {
 
 echo $OUTPUT->header();
 
+if (should_display_cta_feedback()) {
+    print_feedback_reminder_block();
+}
+
 echo $OUTPUT->custom_block_region('content');
 
 echo $OUTPUT->footer();
