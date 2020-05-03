@@ -10607,6 +10607,7 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'give',
+                'context-id' => $PAGE->context->id
             ],
         ],
         [
@@ -10614,6 +10615,7 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'remind',
+                'context-id' => $PAGE->context->id
             ],
         ],
     ];

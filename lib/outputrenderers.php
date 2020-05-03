@@ -837,7 +837,7 @@ class core_renderer extends renderer_base {
 
         if (should_display_cta_feedback()) {
             $output .= html_writer::div(
-                    $this->render_from_template('core/local/cta/feedback_link', []),
+                    $this->render_from_template('core/local/cta/feedback_link', ['contextid' => $PAGE->context->id]),
                     'cta_feedback_placeholder'
             );
             $PAGE->requires->js_call_amd('core/cta_feedback', 'registerFeedbackLink', ['.cta_feedback_placeholder']);
