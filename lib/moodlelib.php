@@ -10632,7 +10632,7 @@ function print_feedback_reminder_block() {
 function should_display_cta_feedback(): bool {
     global $CFG;
 
-    if ($CFG->enablectafeedback) {
+    if ($CFG->enablectafeedback && isloggedin() && !isguestuser()) {
         $give = get_user_preferences('core_cta_feedback_give');
         $remind = get_user_preferences('core_cta_feedback_remind');
 
