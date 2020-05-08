@@ -454,4 +454,12 @@ $definitions = array(
         'mode' => cache_store::MODE_APPLICATION,
         'simpledata' => true,
     ],
+
+    // Donation content cache.
+    'donationcontent' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'simpledata' => true,
+        'ttl' => 21600, // 6 hours.
+    ],
 );

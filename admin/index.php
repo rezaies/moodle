@@ -901,9 +901,13 @@ $overridetossl = !empty($CFG->overridetossl);
 
 admin_externalpage_setup('adminnotifications');
 
+// Check if moodle banner displayed is disabled.
+$showdonationbanner = !isset($CFG->showdonationbanner);
+
 $output = $PAGE->get_renderer('core', 'admin');
 
 echo $output->admin_notifications_page($maturity, $insecuredataroot, $errorsdisplayed, $cronoverdue, $dbproblems,
                                        $maintenancemode, $availableupdates, $availableupdatesfetch, $buggyiconvnomb,
                                        $registered, $cachewarnings, $eventshandlers, $themedesignermode, $devlibdir,
-                                       $mobileconfigured, $overridetossl, $invalidforgottenpasswordurl, $croninfrequent);
+                                       $mobileconfigured, $overridetossl, $invalidforgottenpasswordurl, $croninfrequent,
+                                       $showdonationbanner);

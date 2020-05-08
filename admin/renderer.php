@@ -282,6 +282,7 @@ class core_admin_renderer extends plugin_renderer_base {
      * @param bool $overridetossl Whether or not ssl is being forced.
      * @param bool $invalidforgottenpasswordurl Whether the forgotten password URL does not link to a valid URL.
      * @param bool $croninfrequent If true, warn that cron hasn't run in the past few minutes
+     * @param bool $showdonationbanner Whether the donation banner should be displayed or not.
      *
      * @return string HTML to output.
      */
@@ -289,7 +290,9 @@ class core_admin_renderer extends plugin_renderer_base {
             $cronoverdue, $dbproblems, $maintenancemode, $availableupdates, $availableupdatesfetch,
             $buggyiconvnomb, $registered, array $cachewarnings = array(), $eventshandlers = 0,
             $themedesignermode = false, $devlibdir = false, $mobileconfigured = false,
-            $overridetossl = false, $invalidforgottenpasswordurl = false, $croninfrequent = false) {
+            $overridetossl = false, $invalidforgottenpasswordurl = false, $croninfrequent = false,
+            $showdonationbanner = false) {
+
         global $CFG;
         $output = '';
 
@@ -312,6 +315,7 @@ class core_admin_renderer extends plugin_renderer_base {
         $output .= $this->registration_warning($registered);
         $output .= $this->mobile_configuration_warning($mobileconfigured);
         $output .= $this->forgotten_password_url_warning($invalidforgottenpasswordurl);
+        $output .= $this->donation_content($showdonationbanner);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         ////  IT IS ILLEGAL AND A VIOLATION OF THE GPL TO HIDE, REMOVE OR MODIFY THIS COPYRIGHT NOTICE ///
@@ -513,6 +517,17 @@ class core_admin_renderer extends plugin_renderer_base {
      */
     protected function warning($message, $type = 'warning') {
         return $this->box($message, 'generalbox alert alert-' . $type);
+    }
+
+    /**
+     * Output a warning message, of the type that appears on the admin notifications page.
+     *
+     * @param string $message the message to display.
+     * @param string $type type class
+     * @return string HTML to output.
+     */
+    protected function grey_box($message) {
+        return $this->box($message, 'generalbox alert alert-secondary');
     }
 
     /**
@@ -876,6 +891,33 @@ class core_admin_renderer extends plugin_renderer_base {
         }
 
         return $output;
+    }
+
+    /**
+     * Display moodle's mission message and donation banner.
+     *
+     * @param bool $showdonationbanner Whether the donation banner should be visible or not.
+     * @return string the donation banner html code.
+     */
+    protected function donation_content($showdonationbanner) {
+        if (!$showdonationbanner) {
+            return '';
+        }
+
+        $cache = cache::make('core', 'donationcontent');
+        $donationcontenthtml = $cache->get('donationcontent');
+        if ($donationcontenthtml) {
+            $content = $donationcontenthtml;
+        } else {
+            $lang = current_language();
+            $url = 'https://banners.next.moodle.org/donations/lms/' . $lang . '/install.html';
+            $curl = new curl();
+            $content = $curl->get($url);
+
+            $cache->set('donationcontent', $content);
+        }
+
+        return $this->grey_box(format_text($content, FORMAT_HTML));
     }
 
     /**
