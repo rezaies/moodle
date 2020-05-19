@@ -64,6 +64,7 @@ class record_action_testcase extends externallib_advanced_testcase {
         $context = context_system::instance();
         $user = $this->getDataGenerator()->create_user();
         $this->setUser($user);
+        $eventsink = $this->redirectEvents();
 
         $now = time();
 
@@ -73,5 +74,10 @@ class record_action_testcase extends externallib_advanced_testcase {
 
         $preference = get_user_preferences('core_userfeedback_' . $action);
         $this->assertGreaterThanOrEqual($now, $preference);
+
+        $events = $eventsink->get_events();
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf('\core\event\userfeedback_' . $action, $events[0]);
+        $eventsink->clear();
     }
 }
