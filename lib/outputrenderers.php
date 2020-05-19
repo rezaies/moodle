@@ -836,7 +836,7 @@ class core_renderer extends renderer_base {
         }
 
         $output .= html_writer::div(
-                $this->render_from_template('core/userfeedback_footer_link', []),
+                $this->render_from_template('core/userfeedback_footer_link', ['contextid' => $PAGE->context->id]),
                 'userfeedback_footer_placeholder'
         );
         $this->page->requires->js_call_amd('core/userfeedback', 'registerFeedbackLink', ['.userfeedback_footer_placeholder']);
