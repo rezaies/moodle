@@ -178,13 +178,15 @@ class notification {
      * @param string[] $icon The icon to use. Required keys are 'pix' and 'component'.
      * @param string $message The message to display.
      * @param array $actions An array of action links
+     * @param string $class Optional list of additional classes for the root element
      */
-    public static function add_call_to_action(array $icon, string $message, array $actions) {
+    public static function add_call_to_action(array $icon, string $message, array $actions, $class = '') {
         global $OUTPUT;
 
         $context = new stdClass();
         $context->icon = $icon;
         $context->message = $message;
+        $context->class = $class;
 
         $context->actions = array_map(function($action) {
             $data = [];

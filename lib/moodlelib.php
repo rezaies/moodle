@@ -10658,7 +10658,8 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'give',
-                'context-id' => $PAGE->context->id
+                'record' => 1,
+                'hide' => 1
             ],
         ],
         [
@@ -10666,7 +10667,8 @@ function print_feedback_reminder_block() {
             'url' => '#',
             'data' => [
                 'action' => 'remind',
-                'context-id' => $PAGE->context->id
+                'record' => 1,
+                'hide' => 1
             ],
         ],
     ];
@@ -10675,8 +10677,8 @@ function print_feedback_reminder_block() {
         'component' => 'core'
     ];
 
-    \core\notification::add_call_to_action($icon, get_string('calltofeedback'), $actions);
-    $PAGE->requires->js_call_amd('core/userfeedback', 'registerActions', ['.cta.alert']);
+    \core\notification::add_call_to_action($icon, get_string('calltofeedback'), $actions, 'userfeedback');
+    $PAGE->requires->js_call_amd('core/userfeedback', 'registerEventListeners', ['.cta.alert.userfeedback']);
 }
 
 /**

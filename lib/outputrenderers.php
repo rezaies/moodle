@@ -837,10 +837,10 @@ class core_renderer extends renderer_base {
 
         if (isloggedin() && !isguestuser()) {
             $output .= html_writer::div(
-                    $this->render_from_template('core/userfeedback_footer_link', ['contextid' => $PAGE->context->id]),
+                    $this->render_from_template('core/userfeedback_footer_link', []),
                     'userfeedback_footer_placeholder'
             );
-            $this->page->requires->js_call_amd('core/userfeedback', 'registerFeedbackLink', ['.userfeedback_footer_placeholder']);
+            $this->page->requires->js_call_amd('core/userfeedback', 'registerEventListeners', ['.userfeedback_footer_placeholder']);
         }
 
         // This function is normally called from a layout.php file in {@link core_renderer::header()}
