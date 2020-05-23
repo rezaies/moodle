@@ -520,17 +520,6 @@ class core_admin_renderer extends plugin_renderer_base {
     }
 
     /**
-     * Output a warning message, of the type that appears on the admin notifications page.
-     *
-     * @param string $message the message to display.
-     * @param string $type type class
-     * @return string HTML to output.
-     */
-    protected function grey_box($message) {
-        return $this->box($message, 'generalbox alert alert-secondary');
-    }
-
-    /**
      * Render an appropriate message if dataroot is insecure.
      * @param bool $insecuredataroot
      * @return string HTML to output.
@@ -904,20 +893,8 @@ class core_admin_renderer extends plugin_renderer_base {
             return '';
         }
 
-        $cache = cache::make('core', 'donationcontent');
-        $donationcontenthtml = $cache->get('donationcontent');
-        if ($donationcontenthtml) {
-            $content = $donationcontenthtml;
-        } else {
-            $lang = current_language();
-            $url = 'https://banners.next.moodle.org/donations/lms/' . $lang . '/install.html';
-            $curl = new curl();
-            $content = $curl->get($url);
-
-            $cache->set('donationcontent', $content);
-        }
-
-        return $this->grey_box(format_text($content, FORMAT_HTML));
+        $context = ['lang' => current_language()];
+        return $this->render_from_template('core/donation', $context);
     }
 
     /**
