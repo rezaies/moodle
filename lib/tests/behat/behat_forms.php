@@ -54,7 +54,7 @@ class behat_forms extends behat_base {
      * @param string $button
      */
     public function press_button($button) {
-        $this->execute('behat_general::i_click_on', [$button, 'button']);
+        $this->execute('behat_general::i_click_on', [$button, 'button_exact']);
     }
 
     /**
