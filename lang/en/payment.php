@@ -23,7 +23,10 @@
  */
 
 $string['callbacknotimplemented'] = 'The callback is not implemented for component {$a}.';
+$string['feeincludesurcharge'] = '{$a->fee} (includes {$a->surcharge}% surcharge)';
 $string['nogateway'] = 'There is no gateway that can be used here.';
 $string['nogatewayselected'] = 'Select a gateway first.';
 $string['selectpaymenttype'] = 'Select Payment Type';
 $string['supportedcurrencies'] = 'Supported currencies';
+$string['surcharge'] = 'Surcharge (percentage)';
+$string['surcharge_desc'] = 'If a surcharge percentage is specified here, a surcharge will be added to the cost of users who choose to pay with this payment gateway';
