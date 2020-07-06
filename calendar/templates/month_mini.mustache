@@ -127,8 +127,12 @@
 
                         This is the timestamp for this month.
                         }} data-day-timestamp="{{timestamp}}"{{!
+
+                        This is the title that screen-readers announce for this day.
+                        }} aria-labelledby="daytitle-mini-{{date.year}}-{{date.mon}}-{{mday}}"{{!
                     }}>{{!
-                        }}{{#popovertitle}}
+                        }}<span class="d-none" id="daytitle-mini-{{date.year}}-{{date.mon}}-{{mday}}">{{daytitle}}</span>
+                        {{#popovertitle}}
                             {{< core_calendar/minicalendar_day_link }}
                                 {{$day}}{{mday}}{{/day}}
                                 {{$url}}{{viewdaylink}}{{/url}}
@@ -145,7 +149,7 @@
                             {{/ core_calendar/minicalendar_day_link }}
                         {{/popovertitle}}{{!
                         }}{{^popovertitle}}
-                            {{mday}}
+                            <span aria-hidden="true">{{mday}}</span>
                         {{/popovertitle}}{{!
                     }}</td>
                 {{/days}}
