@@ -85,9 +85,14 @@ define(['jquery', './tether', 'core/event', 'core/custom_interaction_events'], f
             }
         });
 
+        Aria.init();
+
         var hash = window.location.hash;
         if (hash) {
-           jQuery('.nav-link[href="' + hash + '"]').tab('show');
+            var tab = document.querySelector('.nav-link[href="' + hash + '"]');
+            if (tab) {
+                tab.click();
+            }
         }
 
         // We need to call popover automatically if nodes are added to the page later.
@@ -101,7 +106,6 @@ define(['jquery', './tether', 'core/event', 'core/custom_interaction_events'], f
             });
         });
 
-        Aria.init();
         M.util.js_complete('theme_boost/loader:children');
     });
 
