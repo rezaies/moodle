@@ -38,18 +38,14 @@ class provider implements \core_payment\local\callback\provider {
      *
      * @param string $paymentarea
      * @param int $instanceid The enrolment instance id
-     * @return array['amount' => float, 'currency' => string, 'accountid' => int]
+     * @return \core_payment\local\entities\cost
      */
-    public static function get_cost(string $paymentarea, int $instanceid): array {
+    public static function get_cost(string $paymentarea, int $instanceid): \core_payment\local\entities\cost {
         global $DB;
 
         $instance = $DB->get_record('enrol', ['enrol' => 'fee', 'id' => $instanceid], '*', MUST_EXIST);
 
-        return [
-            'amount' => (float) $instance->cost,
-            'currency' => $instance->currency,
-            'accountid' => $instance->customint1,
-        ];
+        return new \core_payment\local\entities\cost($instance->cost, $instance->currency, $instance->customint1);
     }
 
     /**
@@ -58,10 +54,11 @@ class provider implements \core_payment\local\callback\provider {
      * @param string $paymentarea
      * @param int $instanceid The enrolment instance id
      * @param int $paymentid payment id as inserted into the 'payments' table, if needed for reference
+     * @param int $userid The userid the order is going to deliver to
      * @return bool Whether successful or not
      */
-    public static function deliver_order(string $paymentarea, int $instanceid, int $paymentid): bool {
-        global $DB, $USER;
+    public static function deliver_order(string $paymentarea, int $instanceid, int $paymentid, int $userid): bool {
+        global $DB;
 
         $instance = $DB->get_record('enrol', ['enrol' => 'fee', 'id' => $instanceid], '*', MUST_EXIST);
 
@@ -75,7 +72,7 @@ class provider implements \core_payment\local\callback\provider {
             $timeend   = 0;
         }
 
-        $plugin->enrol_user($instance, $USER->id, $instance->roleid, $timestart, $timeend);
+        $plugin->enrol_user($instance, $userid, $instance->roleid, $timestart, $timeend);
 
         return true;
     }

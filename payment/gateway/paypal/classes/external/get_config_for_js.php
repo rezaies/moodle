@@ -73,8 +73,8 @@ class get_config_for_js extends external_api {
         return [
             'clientid' => $config['clientid'],
             'brandname' => $config['brandname'],
-            'cost' => helper::get_rounded_cost($cost['amount'], $cost['currency'], $surcharge),
-            'currency' => $cost['currency'],
+            'cost' => helper::get_rounded_cost($cost->get_amount(), $cost->get_currency(), $surcharge),
+            'currency' => $cost->get_currency(),
         ];
     }
 

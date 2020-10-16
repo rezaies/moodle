@@ -76,15 +76,12 @@ class transaction_complete extends external_api {
         $config = (object)helper::get_gateway_configuration($component, $paymentarea, $itemid, 'paypal');
         $sandbox = $config->environment == 'sandbox';
 
-        [
-            'amount' => $amount,
-            'currency' => $currency,
-            'accountid' => $accountid,
-        ] = payment_helper::get_cost($component, $paymentarea, $itemid);
+        $cost = payment_helper::get_cost($component, $paymentarea, $itemid);
+        $currency = $cost->get_currency();
 
         // Add surcharge if there is any.
         $surcharge = helper::get_gateway_surcharge('paypal');
-        $amount = helper::get_rounded_cost($amount, $currency, $surcharge);
+        $amount = helper::get_rounded_cost($cost->get_amount(), $currency, $surcharge);
 
         $paypalhelper = new paypal_helper($config->clientid, $config->secret, $sandbox);
         $orderdetails = $paypalhelper->get_order_details($orderid);
@@ -102,7 +99,7 @@ class transaction_complete extends external_api {
                         $success = true;
                         // Everything is correct. Let's give them what they paid for.
                         try {
-                            $paymentid = payment_helper::save_payment((int) $accountid, $component, $paymentarea, $itemid,
+                            $paymentid = payment_helper::save_payment($cost->get_account_id(), $component, $paymentarea, $itemid,
                                 (int) $USER->id, $amount, $currency, 'paypal');
 
                             // Store PayPal extra information.
@@ -112,7 +109,7 @@ class transaction_complete extends external_api {
 
                             $DB->insert_record('paygw_paypal', $record);
 
-                            payment_helper::deliver_order($component, $paymentarea, $itemid, $paymentid);
+                            payment_helper::deliver_order($component, $paymentarea, $itemid, $paymentid, (int) $USER->id);
                         } catch (\Exception $e) {
                             debugging('Exception while trying to process payment: ' . $e->getMessage(), DEBUG_DEVELOPER);
                             $success = false;

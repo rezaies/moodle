@@ -26,8 +26,6 @@
 
 namespace core_payment\local\callback;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The provider interface for plugins to provide callbacks which are needed by the payment subsystem.
  *
@@ -39,15 +37,17 @@ interface provider {
     /**
      * @param string $paymentarea
      * @param int $itemid An identifier that is known to the plugin
-     * @return array['amount' => float, 'currency' => string, 'accountid' => int]
+     * @return \core_payment\local\entities\cost
      */
-    public static function get_cost(string $paymentarea, int $itemid): array;
+    public static function get_cost(string $paymentarea, int $itemid): \core_payment\local\entities\cost;
 
     /**
      * @param string $paymentarea
      * @param int $itemid An identifier that is known to the plugin
      * @param int $paymentid payment id as inserted into the 'payments' table, if needed for reference
+     * @param int $userid The userid the order is going to deliver to
+     *
      * @return bool Whether successful or not
      */
-    public static function deliver_order(string $paymentarea, int $itemid, int $paymentid): bool;
+    public static function deliver_order(string $paymentarea, int $itemid, int $paymentid, int $userid): bool;
 }
