@@ -43,3 +43,23 @@ export const getAvailableGateways = (component, paymentArea, itemId) => {
     };
     return Ajax.call([request])[0];
 };
+
+/**
+ * Returns the url of the page the should be redirected to after a successful payment.
+ *
+ * @param {string} component
+ * @param {string} paymentArea
+ * @param {number} itemId
+ * @returns {Promise<string>}
+ */
+export const getSuccessUrl = (component, paymentArea, itemId) => {
+    const request = {
+        methodname: 'core_payment_get_success_url',
+        args: {
+            component,
+            paymentarea: paymentArea,
+            itemid: itemId,
+        }
+    };
+    return Ajax.call([request])[0];
+};

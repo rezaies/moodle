@@ -25,7 +25,7 @@
 import ModalFactory from 'core/modal_factory';
 import Templates from 'core/templates';
 import {get_string as getString} from 'core/str';
-import {getAvailableGateways} from './repository';
+import {getAvailableGateways, getSuccessUrl} from './repository';
 import Selectors from './selectors';
 import ModalEvents from 'core/modal_events';
 import PaymentEvents from 'core_payment/events';
@@ -82,25 +82,30 @@ const show = async(rootNode, {
         const gateway = (rootElement.querySelector(Selectors.values.gateway) || {value: ''}).value;
 
         if (gateway) {
-            processPayment(
+            const processPromise = processPayment(
                 gateway,
                 rootNode.dataset.component,
                 rootNode.dataset.paymentarea,
                 rootNode.dataset.itemid,
                 rootNode.dataset.description
-            )
-            .then(message => {
+            );
+            const successUrlPromise = rootNode.dataset.successurl
+                ? Promise.resolve(rootNode.dataset.successurl)
+                : getSuccessUrl(rootNode.dataset.component, rootNode.dataset.paymentarea, rootNode.dataset.itemid);
+
+            Promise.all([processPromise, successUrlPromise])
+            .then(([message, successUrl]) => {
                 modal.hide();
                 Notification.addNotification({
                     message: message,
                     type: 'success',
                 });
-                location.reload();
+                location.href = successUrl;
 
                 // The following return statement is never reached. It is put here just to make eslint happy.
                 return message;
             })
-            .catch(message => Notification.alert('', message));
+            .catch(([message]) => Notification.alert('', message));
         } else {
             // We cannot use await in the following line.
             // The reason is that we are preventing the default action of the save event being triggered,
