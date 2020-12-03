@@ -91,8 +91,8 @@ $functions = array(
         'type'        => 'read',
         'ajax'          => true,
         'loginrequired' => true,
-   ),
-   'core_backup_get_async_backup_links_restore' => array(
+    ),
+    'core_backup_get_async_backup_links_restore' => array(
         'classname'   => 'core_backup_external',
         'classpath' => 'backup/externallib.php',
         'methodname'  => 'get_async_backup_links_restore',
@@ -2741,6 +2741,13 @@ $functions = array(
         'classname'   => 'core_payment\external\get_available_gateways',
         'methodname'  => 'execute',
         'description' => 'Get the list of payment gateways that support the given component/area',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
+    'core_payment_get_success_url' => [
+        'classname'   => 'core_payment\external\get_success_url',
+        'methodname'  => 'execute',
+        'description' => 'Get the URL of the page the user should be redirected to after a successful payment',
         'type'        => 'read',
         'ajax'        => true,
     ],
