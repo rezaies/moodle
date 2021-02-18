@@ -923,8 +923,8 @@ class core_renderer extends renderer_base {
             'overallstatus' => $cmdetails->get_overall_completion(),
         ];
 
-        // TODO get activity dates for the module.
-        $activitydates = [];
+        // Get activity dates for the module.
+        $activitydates = \core_course\cm_dates_helper::get_dates($cm, $userid);
 
         // Return nothing if there's nothing to render.
         if (empty($activitydates) && !$hascompletion) {
