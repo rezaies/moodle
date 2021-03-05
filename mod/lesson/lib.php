@@ -1542,7 +1542,7 @@ function lesson_get_coursemodule_info($coursemodule) {
     global $DB;
 
     $dbparams = ['id' => $coursemodule->instance];
-    $fields = 'id, name, intro, introformat, completionendreached, completiontimespent';
+    $fields = 'id, name, intro, introformat, completionendreached, completiontimespent, available, deadline';
     if (!$lesson = $DB->get_record('lesson', $dbparams, $fields)) {
         return false;
     }
@@ -1561,7 +1561,68 @@ function lesson_get_coursemodule_info($coursemodule) {
         $result->customdata['customcompletionrules']['completiontimespent'] = $lesson->completiontimespent;
     }
 
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($lesson->available) {
+        $result->customdata['available'] = $lesson->available;
+    }
+    if ($lesson->deadline) {
+        $result->customdata['deadline'] = $lesson->deadline;
+    }
+
     return $result;
+}
+
+/**
+ * Sets dynamic information about a course module
+ *
+ * This function is called from cm_info when displaying the module
+ *
+ * @param cm_info $cm
+ */
+function mod_lesson_cm_info_dynamic(cm_info $cm) {
+    // Gets an assoc array containing the keys for defined user overrides only.
+    $getuseroverride = function($coursemodule) {
+        global $DB, $USER;
+        $useroverride = $DB->get_record('lesson_overrides', ['lessonid' => $coursemodule->instance, 'userid' => $USER->id],
+            'available, deadline');
+        return $useroverride ? get_object_vars($useroverride) : [];
+    };
+
+    // Gets an assoc array containing the keys for defined group overrides only.
+    $getgroupoverride = function($coursemodule) {
+        global $DB, $USER;
+        $groupings = groups_get_user_groups($coursemodule->course, $USER->id);
+
+        if (empty($groupings[0])) {
+            return [];
+        }
+
+        // Select all overrides that apply to the User's groups.
+        [$extra, $params] = $DB->get_in_or_equal(array_values($groupings[0]));
+        $sql = "SELECT available, deadline FROM {lesson_overrides}
+                 WHERE groupid $extra AND lessonid = ?";
+        $params[] = $coursemodule->instance;
+        $groupoverride = $DB->get_record_sql($sql, $params);
+
+        return $groupoverride ? get_object_vars($groupoverride) : [];
+    };
+
+    // Later arguments clobber earlier ones with array_merge. The two helper functions
+    // return arrays containing keys for only the defined overrides. So we get the
+    // desired behaviour as per the algorithm.
+    $effectivedates = (object) array_merge(
+        ['available' => null, 'deadline' => null],
+        $getgroupoverride($cm),
+        $getuseroverride($cm)
+    );
+
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($effectivedates->available) {
+        $cm->override_customdata('available', $effectivedates->available);
+    }
+    if ($effectivedates->deadline) {
+        $cm->override_customdata('deadline', $effectivedates->deadline);
+    }
 }
 
 /**
