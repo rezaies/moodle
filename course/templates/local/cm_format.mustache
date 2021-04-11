@@ -60,8 +60,9 @@
             </div>
             {{/hasextras}}
 
-            {{{activityinfo}}}
-
+            {{#activityinfo}}
+                {{> core_course/activity_info}}
+            {{/activityinfo}}
             {{{availability}}}
 
             {{#hasurl}} {{{altcontent}}} {{/hasurl}}
