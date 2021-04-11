@@ -860,6 +860,8 @@ class core_course_renderer extends plugin_renderer_base {
      * @return string
      */
     public function course_section_cm($course, &$completioninfo, cm_info $mod, $sectionreturn, $displayoptions = array()) {
+        global $USER;
+
         $output = '';
         // We return empty string (because course module will not be displayed at all)
         // if:
@@ -933,7 +935,9 @@ class core_course_renderer extends plugin_renderer_base {
             $output .= html_writer::div($modicons, 'actions');
         }
 
-        $output .= $this->output->activity_information($mod);
+        $completiondetails = \core_completion\cm_completion_details::get_instance($mod, $USER->id);
+        $activitydates = \core\activity_dates::get_dates_for_module($mod, $USER->id);
+        $output .= $this->output->activity_information($mod, $completiondetails, $activitydates);
 
         // Show availability info (if module is not available).
         $output .= $this->course_section_cm_availability($mod, $displayoptions);
