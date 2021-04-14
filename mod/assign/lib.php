@@ -486,7 +486,8 @@ function assign_get_coursemodule_info($coursemodule) {
     global $CFG, $DB;
 
     $dbparams = array('id'=>$coursemodule->instance);
-    $fields = 'id, name, alwaysshowdescription, allowsubmissionsfromdate, intro, introformat, completionsubmit';
+    $fields = 'id, name, alwaysshowdescription, allowsubmissionsfromdate, intro, introformat, completionsubmit,
+        duedate, cutoffdate, allowsubmissionsfromdate';
     if (! $assignment = $DB->get_record('assign', $dbparams, $fields)) {
         return false;
     }
@@ -505,7 +506,75 @@ function assign_get_coursemodule_info($coursemodule) {
         $result->customdata['customcompletionrules']['completionsubmit'] = $assignment->completionsubmit;
     }
 
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($assignment->duedate) {
+        $result->customdata['duedate'] = $assignment->duedate;
+    }
+    if ($assignment->cutoffdate) {
+        $result->customdata['cutoffdate'] = $assignment->cutoffdate;
+    }
+    if ($assignment->allowsubmissionsfromdate) {
+        $result->customdata['allowsubmissionsfromdate'] = $assignment->allowsubmissionsfromdate;
+    }
+
     return $result;
+}
+
+/**
+ * Sets dynamic information about a course module
+ *
+ * This function is called from cm_info when displaying the module
+  *
+ * @param cm_info $cm
+ */
+function mod_assign_cm_info_dynamic(cm_info $cm) {
+    // Gets an assoc array containing the keys for defined user overrides only.
+    $getuseroverride = function($coursemodule) {
+        global $DB, $USER;
+        $useroverride = $DB->get_record('assign_overrides', ['assignid' => $coursemodule->instance, 'userid' => $USER->id],
+            'duedate, cutoffdate, allowsubmissionsfromdate');
+        return $useroverride ? get_object_vars($useroverride) : [];
+    };
+
+    // Gets an assoc array containing the keys for defined group overrides only.
+    $getgroupoverride = function($coursemodule) {
+        global $DB, $USER;
+        $groupings = groups_get_user_groups($coursemodule->course, $USER->id);
+
+        if (empty($groupings[0])) {
+            return [];
+        }
+
+        // Select all overrides that apply to the User's groups.
+        [$extra, $params] = $DB->get_in_or_equal(array_values($groupings[0]));
+        $sql = "SELECT duedate, cutoffdate, allowsubmissionsfromdate FROM {assign_overrides}
+                 WHERE groupid $extra AND assignid = ?
+              ORDER BY sortorder ASC";
+        $params[] = $coursemodule->instance;
+        $groupoverride = $DB->get_record_sql($sql, $params, IGNORE_MULTIPLE);
+
+        return $groupoverride ? get_object_vars($groupoverride) : [];
+    };
+
+    // Later arguments clobber earlier ones with array_merge. The two helper functions
+    // return arrays containing keys for only the defined overrides. So we get the
+    // desired behaviour as per the algorithm.
+    $effectivedates = (object) array_merge(
+        ['duedate' => null, 'cutoffdate' => null, 'allowsubmissionsfromdate' => null],
+        $getgroupoverride($cm),
+        $getuseroverride($cm)
+    );
+
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($effectivedates->duedate) {
+        $cm->override_customdata('duedate', $effectivedates->duedate);
+    }
+    if ($effectivedates->cutoffdate) {
+        $cm->override_customdata('cutoffdate', $effectivedates->cutoffdate);
+    }
+    if ($effectivedates->allowsubmissionsfromdate) {
+        $cm->override_customdata('allowsubmissionsfromdate', $effectivedates->allowsubmissionsfromdate);
+    }
 }
 
 /**
