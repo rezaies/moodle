@@ -2173,7 +2173,8 @@ function quiz_get_coursemodule_info($coursemodule) {
     global $DB;
 
     $dbparams = ['id' => $coursemodule->instance];
-    $fields = 'id, name, intro, introformat, completionattemptsexhausted, completionpass, completionminattempts';
+    $fields = 'id, name, intro, introformat, completionattemptsexhausted, completionpass, completionminattempts,
+        timeopen, timeclose';
     if (!$quiz = $DB->get_record('quiz', $dbparams, $fields)) {
         return false;
     }
@@ -2200,7 +2201,68 @@ function quiz_get_coursemodule_info($coursemodule) {
         $result->customdata['customcompletionrules']['completionminattempts'] = $quiz->completionminattempts;
     }
 
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($quiz->timeopen) {
+        $result->customdata['timeopen'] = $quiz->timeopen;
+    }
+    if ($quiz->timeclose) {
+        $result->customdata['timeclose'] = $quiz->timeclose;
+    }
+
     return $result;
+}
+
+/**
+ * Sets dynamic information about a course module
+ *
+ * This function is called from cm_info when displaying the module
+ *
+ * @param cm_info $cm
+ */
+function mod_quiz_cm_info_dynamic(cm_info $cm) {
+    // Gets an assoc array containing the keys for defined user overrides only.
+    $getuseroverride = function($coursemodule) {
+        global $DB, $USER;
+        $useroverride = $DB->get_record('quiz_overrides', ['quiz' => $coursemodule->instance, 'userid' => $USER->id],
+            'timeopen, timeclose');
+        return $useroverride ? get_object_vars($useroverride) : [];
+    };
+
+    // Gets an assoc array containing the keys for defined group overrides only.
+    $getgroupoverride = function($coursemodule) {
+        global $DB, $USER;
+        $groupings = groups_get_user_groups($coursemodule->course, $USER->id);
+
+        if (empty($groupings[0])) {
+            return [];
+        }
+
+        // Select all overrides that apply to the User's groups.
+        [$extra, $params] = $DB->get_in_or_equal(array_values($groupings[0]));
+        $sql = "SELECT timeopen, timeclose FROM {quiz_overrides}
+                 WHERE groupid $extra AND quiz = ?";
+        $params[] = $coursemodule->instance;
+        $groupoverride = $DB->get_record_sql($sql, $params);
+
+        return $groupoverride ? get_object_vars($groupoverride) : [];
+    };
+
+    // Later arguments clobber earlier ones with array_merge. The two helper functions
+    // return arrays containing keys for only the defined overrides. So we get the
+    // desired behaviour as per the algorithm.
+    $effectivedates = (object) array_merge(
+        ['timeopen' => null, 'timeclose' => null],
+        $getgroupoverride($cm),
+        $getuseroverride($cm)
+    );
+
+    // Populate some other values that can be used in calendar or on dashboard.
+    if ($effectivedates->timeopen) {
+        $cm->override_customdata('timeopen', $effectivedates->timeopen);
+    }
+    if ($effectivedates->timeclose) {
+        $cm->override_customdata('timeclose', $effectivedates->timeclose);
+    }
 }
 
 /**
