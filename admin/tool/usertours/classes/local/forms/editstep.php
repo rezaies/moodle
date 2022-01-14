@@ -40,6 +40,9 @@ class editstep extends \moodleform {
      */
     protected $step;
 
+    private const CONTENTTYPE_LANGSTRING = 0;
+    private const CONTENTTYPE_MANUAL = 1;
+
     /**
      * Create the edit step form.
      *
@@ -81,6 +84,20 @@ class editstep extends \moodleform {
         $mform->setType('title', PARAM_TEXT);
         $mform->addHelpButton('title', 'title', 'tool_usertours');
 
+        // Content type.
+        $typeoptions = [
+            static::CONTENTTYPE_LANGSTRING => get_string('content_type_langstring', 'tool_usertours'),
+            static::CONTENTTYPE_MANUAL => get_string('content_type_manual', 'tool_usertours')
+        ];
+        $mform->addElement('select', 'contenttype', get_string('content_type', 'tool_usertours'), $typeoptions);
+        $mform->addHelpButton('contenttype', 'content_type', 'tool_usertours');
+        $mform->setDefault('contenttype', static::CONTENTTYPE_MANUAL);
+
+        // Language identifier.
+        $mform->addElement('textarea', 'contentlangstring', get_string('moodle_language_identifider', 'tool_usertours'));
+        $mform->setType('contentlangstring', PARAM_TEXT);
+        $mform->hideIf('contentlangstring', 'contenttype', 'eq', static::CONTENTTYPE_MANUAL);
+
         $editoroptions = [
             'subdirs' => 1,
             'maxbytes' => $CFG->maxbytes,
@@ -88,10 +105,11 @@ class editstep extends \moodleform {
             'changeformat' => 1,
             'trusttext' => true
         ];
-        $mform->addElement('editor', 'content', get_string('content', 'tool_usertours'), null, $editoroptions);
-        $mform->addRule('content', get_string('required'), 'required', null, 'client');
-        $mform->setType('content', PARAM_RAW);  // No XSS prevention here, users must be trusted.
-        $mform->addHelpButton('content', 'content', 'tool_usertours');
+        $objs = $mform->createElement('editor', 'content', get_string('content', 'tool_usertours'), null, $editoroptions);
+        // TODO: MDL-68540 We need to add the editor to a group element because editor element will not work with hideIf.
+        $mform->addElement('group', 'contenthtmlgrp', get_string('content', 'tool_usertours'), [$objs], ' ', false);
+        $mform->addHelpButton('contenthtmlgrp', 'content', 'tool_usertours');
+        $mform->hideIf('contenthtmlgrp', 'contenttype', 'eq', static::CONTENTTYPE_LANGSTRING);
 
         // Add the step configuration.
         $mform->addElement('header', 'heading_options', get_string('options_heading', 'tool_usertours'));
@@ -105,5 +123,65 @@ class editstep extends \moodleform {
         }
 
         $this->add_action_buttons();
+    }
+
+    /**
+     * Validate the data base on the submitted content type.
+     *
+     * @param array $data array of ("fieldname"=>value) of submitted data
+     * @param array $files array of uploaded files "element_name"=>tmp_file_path
+     * @return array of "element_name"=>"error_description" if there are errors,
+     *         or an empty array if everything is OK (true allowed for backwards compatibility too).
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+
+        if ($data['contenttype'] == static::CONTENTTYPE_LANGSTRING) {
+            if (!isset($data['contentlangstring']) || trim($data['contentlangstring']) == '') {
+                $errors['contentlangstring'] = get_string('required');
+            } else {
+                $splitted = explode(',', trim($data['contentlangstring']), 2);
+                $langid = $splitted[0];
+                $langcomponent = $splitted[1];
+                if (!get_string_manager()->string_exists($langid, $langcomponent)) {
+                    $errors['contentlangstring'] = get_string('invalid_lang_id', 'tool_usertours');
+                }
+            }
+        }
+
+        if ($data['contenttype'] == static::CONTENTTYPE_MANUAL) {
+            if (strip_tags($data['content']['text']) == '') {
+                $errors['content'] = get_string('required');
+            }
+        }
+
+        return $errors;
+    }
+
+    public function set_data($data) {
+        $data = (object) $data;
+        if (!isset($data->contenttype)) {
+            if (!empty($data->content['text']) &&
+                    preg_match('|^([a-zA-Z][a-zA-Z0-9\.:/_-]*),([a-zA-Z][a-zA-Z0-9\.:/_-]*)$|', $data->content['text'])) {
+                $data->contenttype = static::CONTENTTYPE_LANGSTRING;
+                $data->contentlangstring = $data->content['text'];
+            } else {
+                $data->contenttype = static::CONTENTTYPE_MANUAL;
+            }
+        }
+        parent::set_data($data);
+    }
+
+    public function get_data() {
+        $data = parent::get_data();
+        if ($data) {
+            if ($data->contenttype == static::CONTENTTYPE_LANGSTRING) {
+                $data->content = [
+                        'text' => $data->contentlangstring,
+                        'format' => 1,
+                ];
+            }
+        }
+        return $data;
     }
 }
