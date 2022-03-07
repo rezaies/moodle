@@ -46,6 +46,14 @@ if ($PAGE->has_secondary_navigation()) {
     }
 }
 
+if (!empty($PAGE->theme->removedprimarynavitems)) {
+    foreach ($PAGE->primarynav->children as $node) {
+        if (in_array($node->key, $PAGE->theme->removedprimarynavitems)) {
+            $node->remove();
+        }
+    }
+}
+
 $primary = new core\navigation\output\primary($PAGE);
 $renderer = $PAGE->get_renderer('core');
 $primarymenu = $primary->export_for_template($renderer);
