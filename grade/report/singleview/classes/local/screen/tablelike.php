@@ -145,10 +145,6 @@ abstract class tablelike extends screen {
             $classname = '\\gradereport_singleview\\local\\ui\\' . $field;
             $html = new $classname($grade, $tab);
 
-            if ($field == 'finalgrade' and !empty($this->structure)) {
-                $html .= $this->structure->get_grade_analysis_icon($grade);
-            }
-
             // Singleview users without proper permissions should be presented
             // disabled checkboxes for the Exclude grade attribute.
             if ($field == 'exclude' && !has_capability('moodle/grade:manage', $this->context)){

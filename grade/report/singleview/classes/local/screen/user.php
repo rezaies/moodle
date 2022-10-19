@@ -123,7 +123,7 @@ class user extends tablelike implements selectable_items {
         $this->setup_structure();
 
         $this->definition = [
-            'finalgrade', 'feedback', 'override', 'exclude'
+            'feedback', 'override', 'exclude'
         ];
         $this->set_headers($this->original_headers());
     }
@@ -138,8 +138,8 @@ class user extends tablelike implements selectable_items {
             '', // For filter icon.
             get_string('assessmentname', 'gradereport_singleview'),
             get_string('gradecategory', 'grades'),
-            get_string('range', 'grades'),
             get_string('grade', 'grades'),
+            get_string('range', 'grades'),
             get_string('feedback', 'grades'),
             $this->make_toggle_links('override'),
             $this->make_toggle_links('exclude')
@@ -186,18 +186,25 @@ class user extends tablelike implements selectable_items {
         $itemlabel = $this->structure->get_element_header($gradetreeitem, true, false, false, false, true);
         $grade->label = $item->get_name();
 
+        $finalgrade = new gradereport_singleview\local\ui\finalgrade($grade);
+        if (!empty($this->structure)) {
+            $finalgrade .= $this->structure->get_grade_analysis_icon($grade);
+        }
+
         $line = [
             $OUTPUT->action_icon($this->format_link('grade', $item->id), new pix_icon('t/editstring', ''), null,
                     ['title' => $iconstring, 'aria-label' => $iconstring]),
             $this->format_icon($item) . $lockicon . $itemlabel,
             $this->category($item),
+            $finalgrade,
             new range($item)
         ];
         $lineclasses = [
-            "action",
-            "gradeitem",
-            "category",
-            "range"
+            'action',
+            'gradeitem',
+            'category',
+            'grade',
+            'range',
         ];
 
         $outputline = [];
