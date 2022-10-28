@@ -105,8 +105,6 @@ $USER->grade_last_report[$course->id] = 'singleview';
 
 $report = new gradereport_singleview\report\singleview($courseid, $gpr, $context, $itemtype, $itemid);
 
-$reportname = $report->screen->heading();
-
 if ($itemtype == 'user' || $itemtype == 'user_select') {
     $actionbar = new \gradereport_singleview\output\action_bar($context, $report, 'user');
 } else if ($itemtype == 'grade' || $itemtype == 'grade_select') {
@@ -117,11 +115,11 @@ if ($itemtype == 'user' || $itemtype == 'user_select') {
 }
 
 if ($itemtype == 'user') {
-    print_grade_page_head($course->id, 'report', 'singleview', $reportname, false, $button,
-        true, null, null, $report->screen->item, $actionbar);
+    print_grade_page_head($course->id, 'report', 'singleview', false, false, $button,
+        true, null, null, $report->screen->item, $actionbar, false);
 } else {
-    print_grade_page_head($course->id, 'report', 'singleview', $reportname, false, $button,
-        true, null, null, null, $actionbar);
+    print_grade_page_head($course->id, 'report', 'singleview', false, false, $button,
+        true, null, null, null, $actionbar, false);
 }
 
 if ($data = data_submitted()) {
