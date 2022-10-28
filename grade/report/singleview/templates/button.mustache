@@ -22,7 +22,8 @@
     Example context (json):
     {
         "type": "submit",
-        "value": "Save"
+        "value": "Save",
+        "disabled": true,
     }
 }}
-<input type="{{type}}" value="{{value}}" class="btn btn-secondary">
+<input type="{{type}}" value="{{value}}" class="btn btn-secondary" {{#disabled}}disabled{{/disabled}}>
