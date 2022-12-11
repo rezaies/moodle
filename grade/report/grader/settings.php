@@ -31,9 +31,22 @@ if ($ADMIN->fulltree) {
     $strreal                = get_string('real', 'grades');
     $strletter              = get_string('letter', 'grades');
 
-    /// Add settings for this module to the $settings object (it's already defined)
-    $settings->add(new admin_setting_configtext('grade_report_studentsperpage', get_string('studentsperpage', 'grades'),
-                                            get_string('studentsperpage_help', 'grades'), 100, PARAM_INT));
+    // Add settings for this module to the $settings object (it's already defined).
+    $settings->add(new admin_setting_configtext(
+        'grade_report_studentsperpageoptions',
+        get_string('studentsperpageoptions', 'grades'),
+        get_string('studentsperpageoptions_help', 'grades'),
+        '20,100',
+        PARAM_SEQUENCE
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'grade_report_studentsperpage',
+        get_string('studentsperpage', 'grades'),
+        get_string('studentsperpage_help', 'grades'),
+        20,
+        PARAM_INT
+    ));
 
     $settings->add(new admin_setting_configcheckbox('grade_report_showonlyactiveenrol', get_string('showonlyactiveenrol', 'grades'),
                                                 get_string('showonlyactiveenrol_help', 'grades'), 1));
