@@ -15,15 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for the grader report
+ * Grader report upgrade steps.
  *
- * @package    gradereport_grader
- * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   gradereport_grader
+ * @copyright 2022 Shamim Rezaie <shamim@moodle.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Upgrade the plugin.
+ *
+ * @param int $oldversion the version we are upgrading from
+ * @return bool always true
+ */
+function xmldb_gradereport_grader_upgrade(int $oldversion): bool {
+    if ($oldversion < 2022121200) {
+        unset_config('grade_report_studentsperpage');
+        upgrade_plugin_savepoint(true, 2022121200, 'gradereport', 'grader');
+    }
 
-$plugin->version   = 2022121200;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2022111800;        // Requires this Moodle version.
-$plugin->component = 'gradereport_grader'; // Full name of the plugin (used for diagnostics)
+    return true;
+}

@@ -82,3 +82,5 @@ showanalysisicon,core_grades
 showanalysisicon_desc,core_grades
 showanalysisicon_help,core_grades
 blockunprotect,core_admin
+studentsperpage,core_grades
+studentsperpage_help,core_grades

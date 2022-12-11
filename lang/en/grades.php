@@ -815,8 +815,6 @@ $string['standarddeviation'] = 'Standard deviation';
 $string['stats'] = 'Statistics';
 $string['statslink'] = 'Stats';
 $string['student'] = 'Student';
-$string['studentsperpage'] = 'Students per page';
-$string['studentsperpage_help'] = 'This setting determines the number of students displayed per page in the grader report.';
 $string['studentsperpagereduced'] = 'Reduced maximum students per page from {$a->originalstudentsperpage} to {$a->studentsperpage}. Consider increasing the PHP setting max_input_vars from {$a->maxinputvars}.';
 $string['subcategory'] = 'Normal category';
 $string['submissions'] = 'Submissions';
@@ -915,3 +913,5 @@ $string['showquickfeedback_help'] = 'If enabled, when editing is turned on, a fe
 Note that when feedback is edited in the grader report, an overridden flag is set, meaning that the feedback can no longer be changed from within the related activity.';
 $string['enableajax'] = 'Enable AJAX';
 $string['enableajax_help'] = 'Adds a layer of AJAX functionality to the grader report, simplifying and speeding up common operations. Depends on Javascript being switched on at the user\'s browser level.';
+$string['studentsperpage'] = 'Students per page';
+$string['studentsperpage_help'] = 'This setting determines the number of students displayed per page in the grader report.';
