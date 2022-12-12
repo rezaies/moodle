@@ -43,6 +43,8 @@ $toggle_type   = optional_param('toggle_type', 0, PARAM_ALPHANUM);
 $graderreportsifirst  = optional_param('sifirst', null, PARAM_NOTAGS);
 $graderreportsilast   = optional_param('silast', null, PARAM_NOTAGS);
 
+$studentsperpage = optional_param('perpage', null, PARAM_INT);
+
 $PAGE->set_url(new moodle_url('/grade/report/grader/index.php', array('id'=>$courseid)));
 $PAGE->set_pagelayout('report');
 $PAGE->requires->js_call_amd('gradereport_grader/stickycolspan', 'init');
@@ -60,6 +62,10 @@ if (isset($graderreportsifirst)) {
 }
 if (isset($graderreportsilast)) {
     $SESSION->gradereport["filtersurname-{$context->id}"] = $graderreportsilast;
+}
+
+if (isset($studentsperpage) && $studentsperpage >= 0) {
+    set_user_preference('grade_report_studentsperpage', $studentsperpage);
 }
 
 require_capability('gradereport/grader:view', $context);
@@ -161,14 +167,40 @@ $reporthtml = $report->get_grade_table($displayaverages);
 
 $studentsperpage = $report->get_students_per_page();
 
-// Don't use paging if studentsperpage is empty or 0 at course AND site levels.
+// Print per-page dropdown.
+$pagingoptions = explode(',', $CFG->grade_report_studentsperpageoptions);
+if ($studentsperpage) {
+    $pagingoptions[] = $studentsperpage; // To make sure the current preference is within the options.
+}
+$pagingoptions = array_unique($pagingoptions);
+sort($pagingoptions);
+$pagingoptions = array_combine($pagingoptions, $pagingoptions);
+$pagingoptions['0'] = get_string('all');
+
+$perpagedata = [
+    'baseurl' => new moodle_url('/grade/report/grader/index.php', ['id' => s($courseid), 'report' => 'grader']),
+    'options' => []
+];
+foreach ($pagingoptions as $key => $name) {
+    $perpagedata['options'][] = [
+        'name' => $name,
+        'value' => $key,
+        'selected' => $key == $studentsperpage,
+    ];
+}
+
+$footercontent = html_writer::div(
+    $OUTPUT->render_from_template('gradereport_grader/perpage', $perpagedata)
+    , 'col-auto'
+);
+// Don't use paging if studentsperpage is empty or 0.
 if (!empty($studentsperpage)) {
-    $footercontent = html_writer::div(
+    $footercontent .= html_writer::div(
         $OUTPUT->paging_bar($numusers, $report->page, $studentsperpage, $report->pbarurl),
         'col'
     );
 } else {
-    $footercontent = html_writer::div('', 'col');
+    $footercontent .= html_writer::div('', 'col');
 }
 
 // print submit button
