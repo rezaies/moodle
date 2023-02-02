@@ -52,7 +52,6 @@ class get_groups_for_search_widget extends external_api {
         return new external_function_parameters (
             [
                 'courseid' => new external_value(PARAM_INT, 'Course Id', VALUE_REQUIRED),
-                'actionbaseurl' => new external_value(PARAM_URL, 'The base URL for the group action', VALUE_REQUIRED)
             ]
         );
     }
@@ -61,21 +60,19 @@ class get_groups_for_search_widget extends external_api {
      * Given a course ID find the existing user groups and map some fields to the returned array of group objects.
      *
      * @param int $courseid
-     * @param string $actionbaseurl The base URL for the group action.
      * @return array Groups and warnings to pass back to the calling widget.
      * @throws coding_exception
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      * @throws restricted_context_exception
      */
-    protected static function execute(int $courseid, string $actionbaseurl): array {
-        global $DB, $USER, $COURSE;
+    protected static function execute(int $courseid): array {
+        global $DB, $USER;
 
         $params = self::validate_parameters(
             self::execute_parameters(),
             [
                 'courseid' => $courseid,
-                'actionbaseurl' => $actionbaseurl
             ]
         );
 
@@ -110,16 +107,10 @@ class get_groups_for_search_widget extends external_api {
                 ]);
             }
 
-            $mappedgroups = array_map(function($group) use ($COURSE, $actionbaseurl, $context) {
-                $url = new \moodle_url($actionbaseurl, [
-                    'id' => $COURSE->id,
-                    'group' => $group->id
-                ]);
+            $mappedgroups = array_map(function($group) use ($context) {
                 return (object) [
                     'id' => $group->id,
-                    'name' => format_string($group->name, true, ['context' => $context]),
-                    'url' => $url->out(false),
-                    'active' => false // @TODO MDL-76246
+                    'name' => format_string($group->name, true, ['context' => $context])
                 ];
             }, $groupsmenu);
         }
@@ -150,9 +141,7 @@ class get_groups_for_search_widget extends external_api {
     public static function group_description(): external_description {
         $groupfields = [
             'id' => new external_value(PARAM_ALPHANUM, 'An ID for the group', VALUE_REQUIRED),
-            'url' => new external_value(PARAM_URL, 'The link that applies the group action', VALUE_REQUIRED),
-            'name' => new external_value(PARAM_TEXT, 'The full name of the group', VALUE_REQUIRED),
-            'active' => new external_value(PARAM_BOOL, 'Are we currently on this item?', VALUE_REQUIRED)
+            'name' => new external_value(PARAM_TEXT, 'The full name of the group', VALUE_REQUIRED)
         ];
         return new external_single_structure($groupfields);
     }
