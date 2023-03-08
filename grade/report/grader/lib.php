@@ -1327,6 +1327,14 @@ class grade_report_grader extends grade_report {
                 $itemcell = new html_table_cell();
                 $itemcell->attributes['class'] .= ' range i'. $itemid;
 
+                if ($item->gradetype == GRADE_TYPE_SCALE) {
+                    $itemcell->attributes['class'] .= ' grade_type_scale';
+                } else if ($item->gradetype == GRADE_TYPE_VALUE) {
+                    $itemcell->attributes['class'] .= ' grade_type_value';
+                } else if ($item->gradetype == GRADE_TYPE_TEXT) {
+                    $itemcell->attributes['class'] .= ' grade_type_text';
+                }
+
                 $hidden = '';
                 if ($item->is_hidden()) {
                     $hidden = ' dimmed_text ';
@@ -1486,9 +1494,18 @@ class grade_report_grader extends grade_report {
                     $decimalpoints = $averagesdecimalpoints;
                 }
 
+                $gradetypeclass = '';
+                if ($item->gradetype == GRADE_TYPE_SCALE) {
+                    $gradetypeclass = ' grade_type_scale';
+                } else if ($item->gradetype == GRADE_TYPE_VALUE) {
+                    $gradetypeclass = ' grade_type_value';
+                } else if ($item->gradetype == GRADE_TYPE_TEXT) {
+                    $gradetypeclass = ' grade_type_text';
+                }
+
                 if (!isset($sumarray[$item->id]) || $meancount == 0) {
                     $avgcell = new html_table_cell();
-                    $avgcell->attributes['class'] = 'i'. $itemid;
+                    $avgcell->attributes['class'] = $gradetypeclass . ' i'. $itemid;
                     $avgcell->text = '-';
                     $avgrow->cells[] = $avgcell;
 
@@ -1503,7 +1520,7 @@ class grade_report_grader extends grade_report {
                     }
 
                     $avgcell = new html_table_cell();
-                    $avgcell->attributes['class'] = 'i'. $itemid;
+                    $avgcell->attributes['class'] = $gradetypeclass . ' i'. $itemid;
                     $avgcell->text = $gradehtml.$numberofgrades;
                     $avgrow->cells[] = $avgcell;
                 }

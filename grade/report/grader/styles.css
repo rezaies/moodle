@@ -24,10 +24,8 @@
     border: 1px solid #ccc;
     border-top-width: 0;
     border-left-width: 0;
-    padding: 4px 5px;
-    vertical-align: middle;
-    text-align: center;
-    white-space: nowrap;
+    padding: 10px;
+    vertical-align: text-top;
 }
 
 .path-grade-report-grader .action-menu {
@@ -49,8 +47,23 @@
     color: #ca3120;
 }
 
+.path-grade-report-grader .gradecell {
+    position: relative;
+}
+
 .path-grade-report-grader .grade_icons {
-    text-align: center;
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    white-space: nowrap;
+}
+.path-grade-report-grader .grade_type_value .grade_icons {
+    left: auto;
+    right: 10px;
+}
+
+.path-grade-report-grader .grade_icons .icon:last-child {
+    margin-right: 0;
 }
 
 /**
@@ -72,35 +85,24 @@
 .path-grade-report-grader .gradeparent .user.cell {
     font-size: 14px;
     font-weight: normal;
-    text-align: left;
+}
+
+.path-grade-report-grader .gradeparent .heading .header,
+.path-grade-report-grader .gradeparent .heading .userfield {
+    white-space: nowrap;
 }
 
 /**
  * The user cells.
  */
 .path-grade-report-grader .gradeparent .user.cell {
-    min-width: 250px;
-    width: 250px;
-    white-space: normal;
-    vertical-align: middle;
+    white-space: nowrap;
     height: 100px;
 }
 
 .path-grade-report-grader .gradeparent .highlightable.cell {
     height: 80px;
-    text-align: center;
-    vertical-align: top;
-    padding-top: 20px;
     min-width: 150px;
-}
-
-.path-grade-report-grader .gradeparent .gradecell {
-    vertical-align: top;
-    padding-top: 20px;
-}
-
-.path-grade-report-grader .gradeparent .locked {
-    padding-top: 27px;
 }
 
 .path-grade-report-grader .gradeparent .user.cell .userpicture {
@@ -130,6 +132,7 @@
 .path-grade-report-grader .gradeparent .range .header,
 .path-grade-report-grader .gradeparent .avg .header {
     font-weight: bold;
+    text-align: right;
 }
 
 /**
@@ -139,15 +142,6 @@
     border-top-width: 1px;
 }
 
-/**
- * The footer's cells.
- */
-.path-grade-report-grader .gradeparent .avg .cell {
-    text-align: right;
-    max-width: 200px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
 /**
  * Content styling.
  */
@@ -163,6 +157,10 @@
 
 .path-grade-report-grader .gradeparent .gradevalue {
     display: inline-block;
+}
+
+.path-grade-report-grader .gradeparent .grade_type_value {
+    text-align: right;
 }
 
 .path-grade-report-grader .gradeparent tr:nth-child(n) td.ajaxoverridden:nth-child(n) {
