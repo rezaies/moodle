@@ -47,8 +47,14 @@
     color: #ca3120;
 }
 
-.path-grade-report-grader .gradecell {
+.path-grade-report-grader .gradeparent .cell.gradecell {
     position: relative;
+    padding-bottom: 32px;
+    white-space: nowrap;
+}
+
+.path-grade-report-grader .gradeparent .cell.gradecell > * {
+    white-space: normal;
 }
 
 .path-grade-report-grader .grade_icons {
@@ -153,10 +159,6 @@
 
 .path-grade-report-grader .gradeparent .sorticon {
     margin-left: 3px;
-}
-
-.path-grade-report-grader .gradeparent .gradevalue {
-    display: inline-block;
 }
 
 .path-grade-report-grader .gradeparent .grade_type_value {
