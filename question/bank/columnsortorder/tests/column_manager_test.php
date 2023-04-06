@@ -225,11 +225,10 @@ class column_manager_test extends advanced_testcase {
     public function test_enable_columns() {
         // Set up disablecol with columns from 2 random plugins, and enabledcol with all other columns.
         $plugincolumns = array_filter($this->columns, fn($column) => str_starts_with($column, 'qbank_'));
-        $randomcolumns = array_rand($plugincolumns, 2);
-        $randomcolumn1 = $plugincolumns[$randomcolumns[0]];
-        $randomcolumn2 = $plugincolumns[$randomcolumns[1]];
-        $randomplugin1 = explode('\\', $randomcolumn1)[0];
-        $randomplugin2 = explode('\\', $randomcolumn2)[0];
+        $plugins = array_unique(array_map(fn($column) => explode('\\', $column)[0], $plugincolumns));
+        $randomplugins = array_rand($plugins, 2);
+        $randomplugin1 = $plugins[$randomplugins[0]];
+        $randomplugin2 = $plugins[$randomplugins[1]];
 
         $disabledcols = array_filter($this->columns,
                 fn($column) => str_starts_with($column, $randomplugin1) || str_starts_with($column, $randomplugin2));
@@ -249,7 +248,7 @@ class column_manager_test extends advanced_testcase {
         $newenabled = explode(',', get_config('qbank_columnsortorder', 'enabledcol'));
         sort($newenabled);
         $this->assertEquals($expectedenabled, $newenabled);
-        $this->assertNotContains($randomcolumn2, $newenabled);
+        $this->assertNotContains(reset($expecteddisabled), $newenabled);
         // The disabledcol setting should only contain columns from the remaining disabled plugin.
         $newdisabled = explode(',', get_config('qbank_columnsortorder', 'disabledcol'));
         array_walk($newdisabled, fn($column) => $this->assertStringStartsWith($randomplugin2, $column));
