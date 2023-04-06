@@ -153,10 +153,7 @@ const setUpMoveHandle = (handleContainer, component = '') => {
         repository.setColumnbankOrder(getColumnOrder(), component).catch(Notification.exception);
 
         // Update pinned headers.
-        if (currentPinnedHeader) {
-            const stopAtHeader = table.querySelector(SELECTORS.tableHeader(currentPinnedHeader));
-            processPinnedHeaders(true, stopAtHeader);
-        }
+        rePinHeaders();
     });
 
 };
@@ -192,11 +189,11 @@ const unpinElement = (element) => {
  * @returns {Array} list of pinned headers
  */
 const processPinnedHeaders = (toBePinned, stopAtHeader) => {
-    // Should be less than zIndex of dropdown - action men.
-    let zIndex = 999;
     let left = 0;
     let pinnedHeaders = [];
     const tableHeaders = table.querySelectorAll("thead th");
+    // Each header should be higher than the next header along, so that the resize icons overlap correctly.
+    let headerZIndex = Array.from(tableHeaders).findIndex(header => header === stopAtHeader) + 1;
 
     // Unpin all headers.
     tableHeaders.forEach((header) => {
@@ -218,18 +215,23 @@ const processPinnedHeaders = (toBePinned, stopAtHeader) => {
     if (toBePinned) {
         const tableHeadersArr = Array.prototype.slice.call(tableHeaders);
         tableHeadersArr.some((header) => {
-            zIndex -= 1;
+
             const width = header.offsetWidth;
             // Pin header.
             pinnedHeaders.push(header.dataset[dataIdAttribute]);
-            pinElement(header, width, zIndex, left);
+            pinElement(header, width, headerZIndex, left);
 
             // Pin columns.
             const columns = table.querySelectorAll(SELECTORS.tableColumn(header.dataset[dataIdAttribute]));
+            // Each row should be higher than the next row down, so action menus overlap correctly.
+            let columnZIndex = columns.length;
             columns.forEach(column => {
-                pinElement(column, width, zIndex, left);
+                pinElement(column, width, columnZIndex, left);
+                columnZIndex--;
             });
 
+            // Update z-indexes for the next column.
+            headerZIndex -= 1;
             // Increase margin.
             left += width;
 
@@ -317,6 +319,18 @@ const setUpPinHandle = (handleContainer, component = '') => {
 };
 
 /**
+ * Re-pin the headers based on the currently pinned header.
+ *
+ * This should be called if anything to do with the currently pinned headers changes, such as order
+ * or size, so that they are re-calculated correctly.
+ */
+const rePinHeaders = () => {
+    if (currentPinnedHeader) {
+        processPinnedHeaders(true, document.querySelector(SELECTORS.tableHeader(currentPinnedHeader)));
+    }
+};
+
+/**
  * Get the size of each header.
  *
  * @return {Array}
@@ -357,6 +371,9 @@ const showResizeModal = async(currentHeader, component = '') => {
     });
     root.on(ModalEvents.save, () => {
         repository.setColumnSize(saveColumnSizes(), component).catch(Notification.exception);
+        if (currentHeader.classList.contains('pinned')) {
+            rePinHeaders();
+        }
     });
     modal.show();
 
@@ -409,10 +426,12 @@ const setUpResizeHandle = (handleContainer, component) => {
     });
 
     // Resize column as the mouse move.
-    table.addEventListener('mousemove', e => {
+    document.addEventListener('mousemove', e => {
         if (!currentHeader || !currentResizeHandle || currentX === 0) {
             return;
         }
+
+        document.getSelection().removeAllRanges();
 
         // Offset.
         const offset = e.pageX - currentX;
@@ -423,13 +442,16 @@ const setUpResizeHandle = (handleContainer, component) => {
     });
 
     // Set new size when mouse is up.
-    table.addEventListener('mouseup', () => {
+    document.addEventListener('mouseup', () => {
         if (!currentHeader || !currentResizeHandle || currentX === 0) {
             return;
         }
         if (moveTracker) {
             // If the mouse moved, we are changing the size by drag, so save the change.
             repository.setColumnSize(saveColumnSizes(), component).catch(Notification.exception);
+            if (currentHeader.classList.contains('pinned')) {
+                rePinHeaders();
+            }
         } else {
             // If the mouse didn't move, display a modal to change the size using a form.
             showResizeModal(currentHeader, component);
@@ -684,8 +706,8 @@ export const init = (tableId, isEditing, component = '') => {
     }
 
     setUpCurrentHiddenColumns();
-    setUpCurrentPinnedColumns();
     setUpCurrentColumnSizes();
+    setUpCurrentPinnedColumns();
 
     if (isEditing) {
         setUpHideShowDropdown("#show-hide-dropdown", component).catch(Notification.exception);

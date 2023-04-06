@@ -47,17 +47,18 @@
 <br>
 <div id="show-hide-dropdown" class="qbank-show-hide-dropdown mb-3">
 </div>
-<table class="question-bank-table" id="qbank_columnsortorder-{{uniqid}}"
-       data-pinnedcolumns="{{pinnedcolumns}}" data-hiddencolumns="{{hiddencolumns}}" data-colsize="{{colsize}}">
-    <thead>
+<div class="table-responsive">
+    <table class="question-bank-table" id="qbank_columnsortorder-{{uniqid}}"
+           data-pinnedcolumns="{{pinnedcolumns}}" data-hiddencolumns="{{hiddencolumns}}" data-colsize="{{colsize}}">
+        <thead>
         <tr class="column">
             {{#names}}
                 {{>core_question/column_header}}
             {{/names}}
         </tr>
-    </thead>
-</table>
-
+        </thead>
+    </table>
+</div>
 <br>
 <div>
     {{#columnsdisabled}}

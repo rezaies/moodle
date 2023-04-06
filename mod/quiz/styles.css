@@ -879,6 +879,8 @@ table.quizreviewsummary td.cell {
 table.question-bank-table {
     table-layout: fixed;
     overflow-x: visible;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .question-bank-table .iconcol {
