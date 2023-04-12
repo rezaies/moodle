@@ -1159,6 +1159,7 @@ class view {
             echo \html_writer::div( $resetlink . $dropdown, 'mb-3', ['class' => "row justify-content-end"]);
         }
 
+        echo \html_writer::start_div('position-relative');
         echo \html_writer::start_div('table-responsive');
         $tableid = 'categoryquestions';
         // Start of the table.
@@ -1188,6 +1189,7 @@ class view {
 
         // End of the table.
         echo \html_writer::end_tag('table');
+        echo \html_writer::end_div();
         echo \html_writer::end_div();
 
         // Column Action script.
