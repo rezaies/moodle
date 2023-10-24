@@ -98,12 +98,7 @@ class singleview extends grade_report {
 
         $this->baseurl = new moodle_url($base, $idparams);
 
-        $this->pbarurl = new moodle_url($base, $idparams + [
-                'item' => $itemtype,
-                'itemid' => $itemid
-            ]);
-
-        //  The setup_group method is used to validate group mode and permissions and define the currentgroup value.
+        // The setup_group method is used to validate group mode and permissions and define the currentgroup value.
         $this->setup_groups();
 
         if (($itemtype !== 'grade') && ($itemtype !== 'user')) {
@@ -131,7 +126,7 @@ class singleview extends grade_report {
 
     protected function setup_groups() {
         parent::setup_groups();
-        $this->group_selector = static::groups_course_menu($this->course, $this->pbarurl);
+        $this->group_selector = static::groups_course_menu($this->course);
     }
 
     /**
@@ -139,19 +134,13 @@ class singleview extends grade_report {
      * so all reports would automatically use it.
      *
      * @param stdClass $course
-     * @param moodle_url $urlroot
      * @return string
      */
-    protected static function groups_course_menu(stdClass $course, moodle_url $urlroot) {
+    protected static function groups_course_menu(stdClass $course) {
         global $PAGE;
 
         $renderer = $PAGE->get_renderer('core_grades');
-        $params = $urlroot->params();
-        if ($params['item'] == 'user') {
-            $params['item'] = 'user_select';
-            $urlroot->params($params);
-        }
-        return $renderer->group_selector($course, $urlroot->out());
+        return $renderer->group_selector($course);
     }
 
     /**
