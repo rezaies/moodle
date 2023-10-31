@@ -140,3 +140,4 @@ updatingain,core
 summaryof,core
 aria-toggledropdown,core_grades
 aria:dropdowngrades,core_grades
+viewresults,core
