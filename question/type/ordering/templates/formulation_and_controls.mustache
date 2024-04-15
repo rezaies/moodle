@@ -74,44 +74,68 @@
                                         <i class='fas fa-grip-vertical' aria-hidden="true"></i>
                                     </div>
                                 {{/readonly}}
-                                <div class="d-flex align-items-center flex-grow-1 px-2">
+                                <div class="d-flex align-items-center flex-grow-1 px-2" id="{{id}}-text">
                                     {{{feedbackimage}}}{{{answertext}}}
                                 </div>
                                 {{^readonly}}
                                     <div class="d-flex px-2">
-                                        <button type="button" class="btn btn-icon icon-no-margin" data-action="move-backward"
-                                            aria-label="
-                                                {{#horizontallayout}}
-                                                    {{#cleanstr}}moveleft{{/cleanstr}}
-                                                {{/horizontallayout}}
-                                                {{^horizontallayout}}
-                                                    {{#cleanstr}}moveup{{/cleanstr}}
-                                                {{/horizontallayout}}
-                                            "
-                                        >
-                                            {{#horizontallayout}}
+                                        {{#horizontallayout}}
+                                            <button
+                                                type="button"
+                                                class="dir-rtl-hide btn btn-icon icon-no-margin"
+                                                data-action="move-backward"
+                                                aria-label="{{#cleanstr}}moveleft, qtype_ordering{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
                                                 <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
-                                            {{/horizontallayout}}
-                                            {{^horizontallayout}}
-                                                <i class="icon fa fa-chevron-up" aria-hidden="true"></i>
-                                            {{/horizontallayout}}
-                                        </button>
-                                        <button type="button" class="btn btn-icon icon-no-margin" data-action="move-forward"
-                                            aria-label="
-                                                {{#horizontallayout}}
-                                                    {{#cleanstr}}moveright{{/cleanstr}}
-                                                {{/horizontallayout}}
-                                                {{^horizontallayout}}
-                                                    {{#cleanstr}}movedown{{/cleanstr}}
-                                                {{/horizontallayout}}"
-                                        >
-                                            {{#horizontallayout}}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="dir-rtl-hide btn btn-icon icon-no-margin"
+                                                data-action="move-forward"
+                                                aria-label="{{#cleanstr}}moveright, qtype_ordering{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
                                                 <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
-                                            {{/horizontallayout}}
-                                            {{^horizontallayout}}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="dir-ltr-hide btn btn-icon icon-no-margin"
+                                                data-action="move-backward"
+                                                aria-label="{{#cleanstr}}moveright, qtype_ordering{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
+                                                <i class="icon fa fa-chevron-right" aria-hidden="true"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="dir-ltr-hide btn btn-icon icon-no-margin"
+                                                data-action="move-forward"
+                                                aria-label="{{#cleanstr}}moveleft, qtype_ordering{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
+                                                <i class="icon fa fa-chevron-left" aria-hidden="true"></i>
+                                            </button>
+                                        {{/horizontallayout}}
+                                        {{^horizontallayout}}
+                                            <button
+                                                type="button"
+                                                class="btn btn-icon icon-no-margin"
+                                                data-action="move-backward"
+                                                aria-label="{{#cleanstr}}moveup{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
+                                                <i class="icon fa fa-chevron-up" aria-hidden="true"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="btn btn-icon icon-no-margin"
+                                                data-action="move-forward" aria-label="{{#cleanstr}}movedown{{/cleanstr}}"
+                                                aria-describedby="{{id}}-text"
+                                            >
                                                 <i class="icon fa fa-chevron-down" aria-hidden="true"></i>
-                                            {{/horizontallayout}}
-                                        </button>
+                                            </button>
+                                        {{/horizontallayout}}
                                     </div>
                                 {{/readonly}}
                             </div>
