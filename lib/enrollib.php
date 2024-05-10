@@ -3539,8 +3539,8 @@ abstract class enrol_plugin {
         } else {
             $plugin = $this->get_name();
             if (!enrol_is_enabled($plugin)) {
-                $errors['plugindisabled'] =
-                    new lang_string('plugindisabled', 'enrol', $plugin);
+                $pluginname = get_string('pluginname', 'enrol_' . $plugin);
+                $errors['plugindisabled'] = new lang_string('plugindisabled', 'enrol', $pluginname);
             }
         }
         return $errors;
