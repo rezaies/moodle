@@ -1239,13 +1239,9 @@ class enrol_self_plugin extends enrol_plugin {
         $policy = $this->get_config('usepasswordpolicy');
         if (!empty($enrolmentdata['password'])) {
             if ($policy) {
-                $errmsg = '';
-                $errarray = [];
-                if (!check_password_policy($enrolmentdata['password'], $errmsg, null, $errarray)) {
-                    foreach ($errarray as $err) {
-                        $passwordconfig = str_replace('error', '', $err);
-                        $errors[$err] = new lang_string($err, 'auth', $CFG->$passwordconfig);
-                    }
+                $errarray = get_password_policy_errors($enrolmentdata['password']);
+                foreach ($errarray as $i => $err) {
+                    $errors['enrol_self' . $i] = $err;
                 }
             }
 
