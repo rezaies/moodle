@@ -65,8 +65,8 @@ Feature: Bulk released grades should not be sent to gradebook while submissions 
   @javascript @_alert
   Scenario: Grades are released in bulk before student identities are revealed.
     When I set the field "selectall" to "1"
-    And I set the field "operation" to "Set marking workflow state"
-    And I click on "Go" "button" confirming the dialogue
+    And I click on "Change marking state" "button" in the "sticky-footer" "region"
+    And I click on "Change marking state" "button" in the "Set marking workflow state" "dialogue"
     Then I should not see "Student 1 (student1@example.com)"
     And I should not see "Student 2 (student2@example.com)"
     And I set the field "Marking workflow state" to "Released"
@@ -100,8 +100,8 @@ Feature: Bulk released grades should not be sent to gradebook while submissions 
     When I choose the "Reveal student identities" item in the "Actions" action menu
     And I press "Continue"
     When I set the field "selectall" to "1"
-    And I set the field "operation" to "Set marking workflow state"
-    And I click on "Go" "button" confirming the dialogue
+    And I click on "Change marking state" "button" in the "sticky-footer" "region"
+    And I click on "Change marking state" "button" in the "Set marking workflow state" "dialogue"
     Then I should see "Student 1 (student1@example.com)"
     And I should see "Student 2 (student2@example.com)"
     And I set the field "Marking workflow state" to "Released"
@@ -126,8 +126,8 @@ Feature: Bulk released grades should not be sent to gradebook while submissions 
     And I press "Save and display"
     And I follow "View all submissions"
     When I set the field "selectall" to "1"
-    And I set the field "operation" to "Set marking workflow state"
-    And I click on "Go" "button" confirming the dialogue
+    And I click on "Change marking state" "button" in the "sticky-footer" "region"
+    And I click on "Change marking state" "button" in the "Set marking workflow state" "dialogue"
     Then I should not see "Student 1 (student1@example.com)"
     And I should not see "Student 2 (student2@example.com)"
     And I set the field "Marking workflow state" to "Released"
