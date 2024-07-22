@@ -4,3 +4,4 @@ useroverridesdeleted,mod_assign
 choosegradingaction,mod_assign
 updategrade,mod_assign
 editaction,mod_assign
+saveallquickgradingchanges,mod_assign
