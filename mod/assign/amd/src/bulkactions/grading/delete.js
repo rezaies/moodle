@@ -94,9 +94,10 @@ export default class extends BulkAction {
         });
     }
 
-    async renderBulkActionTrigger(secondGradeAction) {
+    async renderBulkActionTrigger(secondGradeAction, index) {
         return Templates.render('mod_assign/bulkactions/grading/bulk_delete_trigger', {
             issecondgrade: secondGradeAction,
+            isfirst: index === 0,
         });
     }
 }

@@ -124,12 +124,13 @@ export default class extends BulkAction {
         });
     }
 
-    async renderBulkActionTrigger(secondGradeAction) {
+    async renderBulkActionTrigger(secondGradeAction, index) {
         return Templates.render('mod_assign/bulkactions/grading/bulk_general_action_trigger', {
             action: this.actionKey,
             title: await this.#buttonLabel,
             icon: await this.#buttonIcon,
             issecondgrade: secondGradeAction,
+            isfirst: index === 0,
         });
     }
 }

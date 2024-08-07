@@ -39,9 +39,10 @@ export default class extends BulkAction {
          showMessageModal(selectedUsers);
     }
 
-    async renderBulkActionTrigger(secondGradeAction) {
+    async renderBulkActionTrigger(secondGradeAction, index) {
         return Templates.render('mod_assign/bulkactions/grading/bulk_message_trigger', {
             issecondgrade: secondGradeAction,
+            isfirst: index === 0,
         });
     }
 }

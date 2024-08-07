@@ -83,11 +83,13 @@ export default class GradebookEditTreeBulkMove extends BulkAction {
      *
      * @method renderBulkActionTrigger
      * @param {boolean} secondGradeAction Whether the action is a second grade action.
+     * @param {number} index The index of the action.
      * @returns {Promise} The bulk move action trigger promise
      */
-    async renderBulkActionTrigger(secondGradeAction) {
+    async renderBulkActionTrigger(secondGradeAction, index) {
         return Templates.render('core_grades/bulkactions/edit/tree/bulk_move_trigger', {
             issecondgrade: secondGradeAction,
+            isfirst: index === 0,
         });
     }
 
