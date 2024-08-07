@@ -20,18 +20,23 @@
     Renders a trigger element for a given bulk action.
 
     Context variables required for this template:
-    * none
+    * issecondgrade - Whether the action is displayed under a 'More' dropdown or as a separate button.
 
     Example context (json):
     {
     }
 }}
-<button
-    type="button"
-    class="btn py-0 d-flex flex-column"
-    data-action="{{$action}}{{/action}}"
-    title="{{$title}}{{/title}}"
->
-    <span class="w-100 ps-2">{{$icon}}{{/icon}}</span>
-    <span>{{$title}}{{/title}}</span>
-</button>
+{{#issecondgrade}}
+    <a class="dropdown-item" href="#" data-action="{{$action}}{{/action}}" role="menuitem">{{$title}}{{/title}}</a>
+{{/issecondgrade}}
+{{^issecondgrade}}
+    <button
+        type="button"
+        class="btn py-0 d-flex flex-column"
+        data-action="{{$action}}{{/action}}"
+        title="{{$title}}{{/title}}"
+    >
+        <span class="w-100 ps-2">{{$icon}}{{/icon}}</span>
+        <span>{{$title}}{{/title}}</span>
+    </button>
+{{/issecondgrade}}
