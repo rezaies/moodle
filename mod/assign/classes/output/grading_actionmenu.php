@@ -48,8 +48,8 @@ class grading_actionmenu implements templatable, renderable {
     protected int $submissioncount;
     /** @var assign The assign instance. */
     protected assign $assign;
-    /** @var array Preferences for the grading table. */
-    protected array $tablepreferences;
+    /** @var array Applied user initials filters, containing 'firstname' and 'lastname'.
+    protected array $userinitials;
 
     /**
      * Constructor for this object.
@@ -58,13 +58,14 @@ class grading_actionmenu implements templatable, renderable {
      * @param null|bool $submissionpluginenabled This parameter has been deprecated since 4.5 and should not be used anymore.
      * @param null|int $submissioncount This parameter has been deprecated since 4.5 and should not be used anymore.
      * @param assign|null $assign The assign instance. If not provided, it will be loaded based on the cmid.
+     * @param array $userinitials The user initials to filter the table by.
      */
     public function __construct(
         int $cmid,
         ?bool $submissionpluginenabled = null,
         ?int $submissioncount = null,
         assign $assign = null,
-        array $tablepreferences = []
+        array $userinitials = []
     ) {
         $this->cmid = $cmid;
         if (!$assign) {
@@ -72,7 +73,7 @@ class grading_actionmenu implements templatable, renderable {
             $assign = new assign($context, null, null);
         }
         $this->assign = $assign;
-        $this->tablepreferences = $tablepreferences;
+        $this->userinitials = $userinitials;
     }
 
     /**
@@ -91,10 +92,9 @@ class grading_actionmenu implements templatable, renderable {
         $data = [];
 
         $userid = optional_param('userid', null, PARAM_INT);
-        $searchparam = optional_param('search', '', PARAM_NOTAGS);
         // If the user ID is set, it indicates that a user has been selected. In this case, override the user search
         // string with the full name of the selected user.
-        $usersearch = $userid ? fullname(\core_user::get_user($userid)) : $searchparam;
+        $usersearch = $userid ? fullname(\core_user::get_user($userid)) : optional_param('search', '', PARAM_NOTAGS);
 
         $resetlink = new moodle_url('/mod/assign/view.php', ['id' => $this->cmid, 'action' => 'grading']);
         $groupid = groups_get_course_group($course, true);
@@ -108,20 +108,20 @@ class grading_actionmenu implements templatable, renderable {
         );
         $data['userselector'] = $actionbarrenderer->render($userselector);
 
-        $hasinitials = !empty($this->tablepreferences['i_first']) || !empty($this->tablepreferences['i_last']);
+        $hasinitials = !empty($this->userinitials['firstname']) || !empty($this->userinitials['lastname']);
         $additionalparams = ['action' => 'grading', 'id' => $this->cmid];
 
         if (!empty($userid)) {
             $additionalparams['userid'] = $userid;
-        } else if (!empty($searchparam)) {
-            $additionalparams['search'] = $searchparam;
+        } else if (!empty($usersearch)) {
+            $additionalparams['search'] = $usersearch;
         }
 
         $initialselector = new \core_course\output\actionbar\initial_selector(
             course: $course,
             targeturl: 'mod/assign/view.php',
-            firstinitial: $this->tablepreferences['i_first'] ?? '',
-            lastinitial: $this->tablepreferences['i_last'] ?? '',
+            firstinitial: $this->userinitials['firstname'] ?? '',
+            lastinitial: $this->userinitials['lastname'] ?? '',
             firstinitialparam: 'tifirst',
             lastinitialparam: 'tilast',
             additionalparams: $additionalparams

@@ -155,7 +155,7 @@ class flexible_table {
     private $persistent = false;
 
     /** @var array For storing user-customised table properties in the user_preferences db table. */
-    protected $prefs = [];
+    private $prefs = [];
 
     /**
      * Constructor

@@ -4596,10 +4596,14 @@ class assign {
             $gradingtableoutput = $this->get_renderer()->render($gradingtable);
         }
 
+        $gradingtable->initialbars(true);
         $buttons = new \mod_assign\output\grading_actionmenu(
             cmid: $this->get_course_module()->id,
             assign: $this,
-            tablepreferences: $gradingtable->get_preferences()
+            userinitials: [
+                'firstname' => $gradingtable->get_initial_first(),
+                'lastname' => $gradingtable->get_initial_last(),
+            ]
         );
         $actionformtext = $this->get_renderer()->render($buttons);
         $currenturl = new moodle_url('/mod/assign/view.php', ['id' => $this->get_course_module()->id, 'action' => 'grading']);
