@@ -19,7 +19,6 @@ namespace mod_lti\external;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_value;
-use mod_lti\local\types_helper;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -38,6 +37,7 @@ class toggle_showinactivitychooser extends external_api {
     /**
      * Get parameter definition.
      *
+     * @deprecated since Moodle 4.4
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
@@ -51,33 +51,33 @@ class toggle_showinactivitychooser extends external_api {
     /**
      * Toggles showinactivitychooser setting.
      *
+     * @deprecated since Moodle 4.4
      * @param int $tooltypeid the id of the course external tool type.
      * @param int $courseid the id of the course we are in.
      * @param bool $showinactivitychooser Show in activity chooser setting.
      * @return bool true or false
      */
     public static function execute(int $tooltypeid, int $courseid, bool $showinactivitychooser): bool {
-        [
-            'tooltypeid' => $tooltypeid,
-            'courseid' => $courseid,
-            'showinactivitychooser' => $showinactivitychooser,
-        ] = self::validate_parameters(self::execute_parameters(), [
-            'tooltypeid' => $tooltypeid,
-            'courseid' => $courseid,
-            'showinactivitychooser' => $showinactivitychooser,
-        ]);
-
-        $context =  \core\context\course::instance($courseid);
-        self::validate_context($context);
-        return types_helper::override_type_showinactivitychooser($tooltypeid, $courseid, $context, $showinactivitychooser);
+        debugging(__FUNCTION__ . '() is deprecated. Please use \core_ltix\external\toggle_showinactivitychooser instead.',
+                  DEBUG_DEVELOPER);
+        return \core_ltix\external\toggle_showinactivitychooser::execute($tooltypeid, $courseid, $showinactivitychooser);
     }
 
     /**
      * Get service returns definition.
      *
+     * @deprecated since Moodle 4.4
      * @return external_value
      */
     public static function execute_returns(): external_value {
         return new external_value(PARAM_BOOL, 'Success');
+    }
+
+    /**
+     * Mark the function as deprecated.
+     * @return bool
+     */
+    public static function execute_is_deprecated() {
+        return true;
     }
 }

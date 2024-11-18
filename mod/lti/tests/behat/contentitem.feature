@@ -14,9 +14,9 @@ Feature: Content-Item support
     And the following "course enrolments" exist:
       | user | course | role |
       | teacher1 | C1 | editingteacher |
-    And the following "mod_lti > tool types" exist:
-      | name            | description        | baseurl                                   | coursevisible | state | lti_contentitem |
-      | Teaching Tool 1 | Tool 1 description | /mod/lti/tests/fixtures/tool_provider.php | 2             | 1     | 1               |
+    And the following "core_ltix > tool types" exist:
+      | name            | description        | baseurl                                | coursevisible | state | lti_contentitem |
+      | Teaching Tool 1 | Tool 1 description | /ltix/tests/fixtures/tool_provider.php | 2             | 1     | 1               |
 
   @javascript
   Scenario: Tool that supports Deep Linking should be able to configure a tool via the Select content button

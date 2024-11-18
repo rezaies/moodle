@@ -281,7 +281,8 @@
             "database",
             "standard"
         ],
-        "ltiservice": [
+        "ltiservice": [],
+        "ltixservice": [
             "basicoutcomes",
             "gradebookservices",
             "memberships",
@@ -289,6 +290,7 @@
             "toolproxy",
             "toolsettings"
         ],
+        "ltixsource": [],
         "media": [
             "html5audio",
             "html5video",
@@ -613,6 +615,14 @@
         ],
         "logstore": [
             "legacy"
+        ],
+        "ltiservice": [
+            "gradebookservices",
+            "basicoutcomes",
+            "memberships",
+            "profile",
+            "toolproxy",
+            "toolsettings"
         ],
         "media": [
             "swf"

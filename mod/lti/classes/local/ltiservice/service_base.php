@@ -30,16 +30,15 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
-require_once($CFG->dirroot . '/mod/lti/OAuthBody.php');
 
-// TODO: Switch to core oauthlib once implemented - MDL-30149.
-use moodle\mod\lti as lti;
 use stdClass;
+use core_ltix\oauth_helper;
 
 
 /**
  * The mod_lti\local\ltiservice\service_base class.
  *
+ * @deprecated since Moodle 4.5 use \core_ltix\local\ltiservice\service_base instead.
  * @package    mod_lti
  * @since      Moodle 2.8
  * @copyright  2014 Vital Source Technologies http://vitalsource.com
@@ -70,8 +69,11 @@ abstract class service_base {
 
     /**
      * Class constructor.
+     * @deprecated since Moodle 4.5
      */
     public function __construct() {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
 
         $this->id = null;
         $this->name = null;
@@ -87,9 +89,11 @@ abstract class service_base {
      * Get the service ID.
      *
      * @return string
+     * @deprecated since Moodle 4.5
      */
     public function get_id() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->id;
 
     }
@@ -98,10 +102,12 @@ abstract class service_base {
      * Get the service compoent ID.
      *
      * @return string
+     * @deprecated since Moodle 4.5
      */
     public function get_component_id() {
-
-        return 'ltiservice_' . $this->id;
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
+        return 'ltixservice_' . $this->id;
 
     }
 
@@ -109,9 +115,11 @@ abstract class service_base {
      * Get the service name.
      *
      * @return string
+     * @deprecated since Moodle 4.5
      */
     public function get_name() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->name;
 
     }
@@ -120,9 +128,11 @@ abstract class service_base {
      * Get whether the service requests need to be signed.
      *
      * @return boolean
+     * @deprecated since Moodle 4.5
      */
     public function is_unsigned() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->unsigned;
 
     }
@@ -131,9 +141,11 @@ abstract class service_base {
      * Get the tool proxy object.
      *
      * @return stdClass
+     * @deprecated since Moodle 4.5
      */
     public function get_tool_proxy() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->toolproxy;
 
     }
@@ -144,9 +156,11 @@ abstract class service_base {
      * @param object $toolproxy The tool proxy for this service request
      *
      * @var stdClass
+     * @deprecated since Moodle 4.5
      */
     public function set_tool_proxy($toolproxy) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $this->toolproxy = $toolproxy;
 
     }
@@ -155,9 +169,11 @@ abstract class service_base {
      * Get the type object.
      *
      * @return stdClass
+     * @deprecated since Moodle 4.5
      */
     public function get_type() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->type;
 
     }
@@ -168,9 +184,11 @@ abstract class service_base {
      * @param object $type The LTI type for this service request
      *
      * @var stdClass
+     * @deprecated since Moodle 4.5
      */
     public function set_type($type) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $this->type = $type;
 
     }
@@ -179,9 +197,11 @@ abstract class service_base {
      * Get the type config array.
      *
      * @return array|null
+     * @deprecated since Moodle 4.5
      */
     public function get_typeconfig() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return $this->typeconfig;
 
     }
@@ -192,9 +212,11 @@ abstract class service_base {
      * @param array $typeconfig The LTI type config for this service request
      *
      * @var array
+     * @deprecated since Moodle 4.5
      */
     public function set_typeconfig($typeconfig) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $this->typeconfig = $typeconfig;
 
     }
@@ -203,6 +225,7 @@ abstract class service_base {
      * Get the resources for this service.
      *
      * @return resource_base[]
+     * @deprecated since Moodle 4.5
      */
     abstract public function get_resources();
 
@@ -212,8 +235,11 @@ abstract class service_base {
      * A null value indicates that no scopes are required to access the service.
      *
      * @return array|null
+     * @deprecated since Moodle 4.5
      */
     public function get_permitted_scopes() {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return null;
     }
 
@@ -223,8 +249,11 @@ abstract class service_base {
      * A null value indicates that no scopes are required to access the service.
      *
      * @return array|null
+     * @deprecated since Moodle 4.5
      */
     public function get_scopes() {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return null;
     }
 
@@ -232,27 +261,33 @@ abstract class service_base {
      * Returns the configuration options for this service.
      *
      * @param \MoodleQuickForm $mform Moodle quickform object definition
+     * @deprecated since Moodle 4.5
      */
     public function get_configuration_options(&$mform) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
     }
 
     /**
      * Called when a new LTI Instance is added.
      *
      * @param object $lti LTI Instance.
+     * @deprecated since Moodle 4.5
      */
     public function instance_added(object $lti): void {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
     }
 
     /**
      * Called when a new LTI Instance is updated.
      *
      * @param object $lti LTI Instance.
+     * @deprecated since Moodle 4.5
      */
     public function instance_updated(object $lti): void {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
     }
 
     /**
@@ -266,9 +301,12 @@ abstract class service_base {
      * @param null|object $lti LTI Instance.
      *
      * @return array containing the target link URL and the custom params string to use.
+     * @deprecated since Moodle 4.5
      */
     public function override_endpoint(string $messagetype, string $targetlinkuri,
             ?string $customstr, int $courseid, ?object $lti = null): array {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return [$targetlinkuri, $customstr];
     }
 
@@ -276,18 +314,22 @@ abstract class service_base {
      * Called when a new LTI Instance is deleted.
      *
      * @param int $id LTI Instance.
+     * @deprecated since Moodle 4.5
      */
     public function instance_deleted(int $id): void {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
     }
 
     /**
      * Set the form data when displaying the LTI Instance form.
      *
      * @param object $defaultvalues Default form values.
+     * @deprecated since Moodle 4.5
      */
     public function set_instance_form_values(object $defaultvalues): void {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
     }
 
     /**
@@ -312,10 +354,12 @@ abstract class service_base {
      * @param int $typeid The tool lti type id.
      * @param int $courseid The course id.
      * @return bool returns True if tool is used in context, false otherwise.
+     * @deprecated since Moodle 4.5
      */
     public function is_used_in_context($typeid, $courseid) {
         global $DB;
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $ok = $DB->record_exists('lti', array('course' => $courseid, 'typeid' => $typeid));
         return $ok || $DB->record_exists('lti_types', array('course' => $courseid, 'id' => $typeid));
     }
@@ -326,10 +370,12 @@ abstract class service_base {
      * @param int $typeid The tool lti type id.
      * @param int $courseid The course id.
      * @return bool returns True if tool is allowed in context, false otherwise.
+     * @deprecated since Moodle 4.5
      */
     public function is_allowed_in_context($typeid, $courseid) {
         global $DB;
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         // Check if it is a Course tool for this course or a Site tool.
         $type = $DB->get_record('lti_types', array('id' => $typeid));
 
@@ -348,8 +394,11 @@ abstract class service_base {
      * The type is passed to check the configuration and not return parameters for services not used.
      *
      * @return array Key/value pairs to add as launch parameters.
+     * @deprecated since Moodle 4.5
      */
     public function get_launch_parameters($messagetype, $courseid, $userid, $typeid, $modlti = null) {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return array();
     }
 
@@ -358,8 +407,11 @@ abstract class service_base {
      * to be transformed to LTI 1.3 claims.
      *
      * @return array Key/value pairs of params to claim mapping.
+     * @deprecated since Moodle 4.5
      */
     public function get_jwt_claim_mappings(): array {
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         return [];
     }
 
@@ -367,9 +419,11 @@ abstract class service_base {
      * Get the path for service requests.
      *
      * @return string
+     * @deprecated since Moodle 4.5
      */
     public static function get_service_path() {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $url = new \moodle_url('/mod/lti/services.php');
 
         return $url->out(false);
@@ -382,9 +436,11 @@ abstract class service_base {
      * @param string $value  Value to be parsed
      *
      * @return string
+     * @deprecated since Moodle 4.5
      */
     public function parse_value($value) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         if (empty($this->resources)) {
             $this->resources = $this->get_resources();
         }
@@ -406,12 +462,14 @@ abstract class service_base {
      * @param string[] $scopes  Array of required scope(s) for incoming request
      *
      * @return boolean
+     * @deprecated since Moodle 4.5
      */
     public function check_tool($typeid, $body = null, $scopes = null) {
-
+        debugging('Class \mod_lti\local\ltiservice\service_base is deprecated, please use '.
+            '\core_ltix\local\ltiservice\service_base instead.', DEBUG_DEVELOPER);
         $ok = true;
         $toolproxy = null;
-        $consumerkey = lti\get_oauth_key_from_headers($typeid, $scopes);
+        $consumerkey = \core_ltix\oauth_helper::get_oauth_key_from_headers($typeid, $scopes);
         if ($consumerkey === false) {
             $ok = $this->is_unsigned();
         } else {
@@ -419,14 +477,14 @@ abstract class service_base {
                 $typeid = $consumerkey;
             }
             if (!empty($typeid)) {
-                $this->type = lti_get_type($typeid);
-                $this->typeconfig = lti_get_type_config($typeid);
+                $this->type = \core_ltix\helper::get_type($typeid);
+                $this->typeconfig = \core_ltix\helper::get_type_config($typeid);
                 $ok = !empty($this->type->id);
                 if ($ok && !empty($this->type->toolproxyid)) {
-                    $this->toolproxy = lti_get_tool_proxy($this->type->toolproxyid);
+                    $this->toolproxy = \core_ltix\helper::get_tool_proxy($this->type->toolproxyid);
                 }
             } else {
-                $toolproxy = lti_get_tool_proxy_from_guid($consumerkey);
+                $toolproxy = \core_ltix\helper::get_tool_proxy_from_guid($consumerkey);
                 if ($toolproxy !== false) {
                     $this->toolproxy = $toolproxy;
                 }
@@ -467,13 +525,13 @@ abstract class service_base {
                   'Please use service_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         $toolproxy = null;
-        $consumerkey = lti\get_oauth_key_from_headers();
+        $consumerkey = \core_ltix\oauth_helper::get_oauth_key_from_headers();
         if (empty($toolproxyguid)) {
             $toolproxyguid = $consumerkey;
         }
 
         if (!empty($toolproxyguid)) {
-            $toolproxy = lti_get_tool_proxy_from_guid($toolproxyguid);
+            $toolproxy = \core_ltix\helper::get_tool_proxy_from_guid($toolproxyguid);
             if ($toolproxy !== false) {
                 if (!$this->is_unsigned() && ($toolproxy->guid == $consumerkey)) {
                     $ok = $this->check_signature($toolproxy->guid, $toolproxy->secret, $body);
@@ -506,11 +564,11 @@ abstract class service_base {
                   'Please use service_base::check_tool() instead.', DEBUG_DEVELOPER);
         $ok = false;
         $tool = null;
-        $consumerkey = lti\get_oauth_key_from_headers();
+        $consumerkey = \core_ltix\oauth_helper::get_oauth_key_from_headers();
         if (empty($typeid)) {
             return $ok;
         } else if ($this->is_allowed_in_context($typeid, $courseid)) {
-            $tool = lti_get_type_type_config($typeid);
+            $tool = \core_ltix\helper::get_type_type_config($typeid);
             if ($tool !== false) {
                 if (!$this->is_unsigned() && ($tool->lti_resourcekey == $consumerkey)) {
                     $ok = $this->check_signature($tool->lti_resourcekey, $tool->lti_password, $body);
@@ -536,7 +594,7 @@ abstract class service_base {
         $ok = true;
         try {
             // TODO: Switch to core oauthlib once implemented - MDL-30149.
-            lti\handle_oauth_body_post($consumerkey, $secret, $body);
+            oauth_helper::handle_oauth_body_post($consumerkey, $secret, $body);
         } catch (\Exception $e) {
             debugging($e->getMessage() . "\n");
             $ok = false;
