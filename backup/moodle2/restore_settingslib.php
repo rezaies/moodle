@@ -322,3 +322,12 @@ class restore_contentbankcontent_setting extends restore_generic_setting {
  */
 class restore_xapistate_setting extends restore_generic_setting {
 }
+
+/**
+ * Root setting to control if restore will create LTIX settings or not.
+ *
+ * @copyright  2025 Shamim Rezaie <shamim@moodle.com>
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class restore_ltix_setting extends restore_generic_setting {
+}

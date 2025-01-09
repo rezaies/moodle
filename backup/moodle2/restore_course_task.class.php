@@ -133,7 +133,13 @@ class restore_course_task extends restore_task {
             $this->add_step(new restore_contentbankcontent_structure_step('course_contentbank', 'contentbank.xml'));
         }
 
-        // At the end, mark it as built
+        // The ltixtypes and ltixs files (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new restore_ltixtypes_structure_step('ltix_types', 'ltixtypes.xml'));
+            $this->add_step(new restore_ltixs_structure_step('course_ltixs', 'ltixs.xml'));
+        }
+
+        // At the end, mark it as built.
         $this->built = true;
     }
 

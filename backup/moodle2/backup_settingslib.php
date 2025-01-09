@@ -296,3 +296,12 @@ class backup_contentbankcontent_setting extends backup_generic_setting {
  */
 class backup_xapistate_setting extends backup_generic_setting {
 }
+
+/**
+ * Root setting to control if backup will include LTIX settings or not.
+ *
+ * @copyright  2025 Shamim Rezaie <shamim@moodle.com>
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class backup_ltix_setting extends backup_generic_setting {
+}

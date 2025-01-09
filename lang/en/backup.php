@@ -390,6 +390,7 @@ $string['rootsettinggroups'] = 'Include groups and groupings';
 $string['rootsettingimscc1'] = 'Convert to IMS Common Cartridge 1.0';
 $string['rootsettingimscc11'] = 'Convert to IMS Common Cartridge 1.1';
 $string['rootsettingxapistate'] = 'Include user\'s state in content such as H5P activities';
+$string['rootsettingltix'] = 'Include LTI usages';
 $string['samesitenotification'] = 'This backup was created with only references to files, not the files themselves. Restoring will only work on this site.';
 $string['section_prefix'] = 'Section {$a}: ';
 $string['sitecourseformatwarning'] = 'This is a site home backup. It can only be restored on the site home.';

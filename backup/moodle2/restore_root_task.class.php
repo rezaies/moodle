@@ -340,6 +340,18 @@ class restore_root_task extends restore_task {
         $xapistate->get_ui()->set_changeable($changeable);
         $this->add_setting($xapistate);
 
+        // Define LTIx types and instances.
+        $defaultvalue = false;
+        $changeable = false;
+        if (isset($rootsettings['ltix']) && $rootsettings['ltix']) { // Only enabled when available.
+            $defaultvalue = true;
+            $changeable = true;
+        }
+        $ltix = new restore_ltix_setting('ltix', base_setting::IS_BOOLEAN, $defaultvalue);
+        $ltix->set_ui(new backup_setting_ui_checkbox($ltix, get_string('rootsettingltix', 'backup')));
+        $ltix->get_ui()->set_changeable($changeable);
+        $this->add_setting($ltix);
+
         // Include legacy files.
         $defaultvalue = true;
         $changeable = true;

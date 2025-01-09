@@ -192,6 +192,11 @@ class backup_root_task extends backup_task {
         $this->add_setting($xapistate);
         $users->add_dependency($xapistate);
 
+        // Define LTI tool settings inclusion setting.
+        $ltix = new backup_ltix_setting('ltix', base_setting::IS_BOOLEAN, true);
+        $ltix->set_ui(new backup_setting_ui_checkbox($ltix, get_string('rootsettingltix', 'backup')));
+        $this->add_setting($ltix);
+
         // Define legacy file inclusion setting.
         $legacyfiles = new backup_generic_setting('legacyfiles', base_setting::IS_BOOLEAN, true);
         $legacyfiles->set_ui(new backup_setting_ui_checkbox($legacyfiles, get_string('rootsettinglegacyfiles', 'backup')));

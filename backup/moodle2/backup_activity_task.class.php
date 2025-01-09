@@ -224,6 +224,11 @@ abstract class backup_activity_task extends backup_task {
             $this->add_step(new backup_xapistate_structure_step('activity_xapistate', 'xapistate.xml'));
         }
 
+        // Generate the ltixs file (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new backup_ltixs_structure_step('activity_ltixs', 'ltixs.xml'));
+        }
+
         // At the end, mark it as built
         $this->built = true;
     }

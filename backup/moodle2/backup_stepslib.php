@@ -3146,3 +3146,243 @@ class backup_xapistate_structure_step extends backup_structure_step {
         return $states;
     }
 }
+
+/**
+ * Structure step in charge of constructing the ltixtypes.xml file for all the LTI types.
+ *
+ * @copyright  2025 Shamim Rezaei <shamim@moodle.com>
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class backup_ltixtypes_structure_step extends backup_structure_step {
+    #[\Override]
+    protected function define_structure() {
+        $ltitypes = new backup_nested_element('ltitypes');
+        $ltitype = new backup_nested_element('ltitype', ['id'], [
+            'name',
+            'baseurl',
+            'tooldomain',
+            'state',
+            'course',
+            'coursevisible',
+            'ltiversion',
+            'clientid',
+            'toolproxyid',
+            'enabledcapability',
+            'parameter',
+            'icon',
+            'secureicon',
+            'createdby',
+            'timecreated',
+            'timemodified',
+            'description',
+        ]);
+
+        $ltitypesconfigs = new backup_nested_element('ltitypesconfigs');
+        $ltitypesconfig  = new backup_nested_element('ltitypesconfig', ['id'], [
+            'name',
+            'value',
+        ]);
+        $ltitypesconfigencrypted  = new backup_nested_element('ltitypesconfigencrypted', ['id'], [
+            'name',
+            new encrypted_final_element('value'),
+        ]);
+
+        $ltitoolproxy = new backup_nested_element('ltitoolproxy', ['id']);
+
+        $ltitoolsettings = new backup_nested_element('ltitoolsettings');
+        $ltitoolsetting  = new backup_nested_element('ltitoolsetting', ['id'], [
+            'settings',
+            'timecreated',
+            'timemodified',
+        ]);
+
+        $lticoursevisible = new backup_nested_element('lticoursevisible', ['id'], [
+            'coursevisible',
+        ]);
+
+        // Build the tree.
+        $ltitypes->add_child($ltitype);
+        $ltitype->add_child($ltitypesconfigs);
+        $ltitypesconfigs->add_child($ltitypesconfig);
+        $ltitypesconfigs->add_child($ltitypesconfigencrypted);
+        $ltitype->add_child($ltitoolproxy);
+        $ltitoolproxy->add_child($ltitoolsettings);
+        $ltitoolsettings->add_child($ltitoolsetting);
+        $ltitype->add_child($lticoursevisible);
+
+        // Define sources.
+        $ltitypearray = $this->retrieve_lti_types();
+        $ltitype->set_source_array($ltitypearray ?: []);
+
+        // Add type config values only if the type is not a site type. Encrypt password and resourcekey.
+        $params = [
+            'typeid' => backup::VAR_PARENTID,
+            'siteid' => backup_helper::is_sqlparam(SITEID),
+            'password' => backup_helper::is_sqlparam('password'),
+            'resourcekey' => backup_helper::is_sqlparam('resourcekey'),
+        ];
+        $ltitypesconfig->set_source_sql(
+            "SELECT ltc.id, ltc.name, ltc.value
+               FROM {lti_types_config} ltc
+               JOIN {lti_types} lt ON lt.id = ltc.typeid AND lt.course <> :siteid
+              WHERE ltc.typeid = :typeid
+                    AND ltc.name <> :password
+                    AND ltc.name <> :resourcekey",
+            $params
+        );
+        $ltitypesconfigencrypted->set_source_sql(
+            "SELECT ltc.id, ltc.name, ltc.value
+               FROM {lti_types_config} ltc
+               JOIN {lti_types} lt ON lt.id = ltc.typeid AND lt.course <> :siteid
+              WHERE ltc.typeid = :typeid
+                    AND (ltc.name = :password OR ltc.name = :resourcekey)",
+            $params
+        );
+
+        // If this is LTI 2 tool add settings for the current activity.
+        $ltitoolproxy->set_source_sql(
+            "SELECT toolproxyid AS id FROM {lti_types} WHERE id = ? AND toolproxyid IS NOT NULL",
+            [backup::VAR_PARENTID]
+        );
+        $ltitoolsetting->set_source_sql(
+            "SELECT *
+               FROM {lti_tool_settings}
+              WHERE toolproxyid = ? AND course = ?",
+            [backup::VAR_PARENTID, backup::VAR_COURSEID]);
+
+        $lticoursevisible->set_source_sql(
+            "SELECT id, coursevisible FROM {lti_coursevisible} WHERE typeid = ? AND courseid = ?",
+            [backup::VAR_PARENTID, backup::VAR_COURSEID]
+        );
+
+        // Define id annotations.
+        $ltitype->annotate_ids('user', 'createdby');
+        $ltitype->annotate_ids('course', 'course');
+
+        // Attach ltixsource plugin structure to $ltitype element, only one allowed.
+        $this->add_plugin_structure('ltixsource', $ltitype, false);
+        // Attach ltixservice plugin structure to $ltitype element, only one allowed.
+        $this->add_plugin_structure('ltixservice', $ltitype, false);
+
+        return $ltitypes;
+    }
+
+    /**
+     * Retrieve records from {lti_type} table associated with the course.
+     *
+     * Information about site tools is not returned because it is insecure to back it up,
+     * only fields necessary for same-site tool matching are left in the record
+     *
+     * @return stdClass[]
+     */
+    protected function retrieve_lti_types(): array {
+        global $DB;
+
+        $params = [
+            'courseid' => $this->get_courseid(),
+            'coursecontextlevel' => CONTEXT_COURSE,
+            'slashlike' => '/%',
+        ];
+        $pathmatch = $DB->sql_like('c_rl.path', $DB->sql_concat('c_course.path', ':slashlike'));
+        $records = $DB->get_records_sql(
+            "SELECT DISTINCT t.*
+                        FROM {lti_types} t
+                        JOIN {lti_resource_link} rl ON rl.typeid = t.id
+                        JOIN {context} c_rl ON c_rl.id = rl.contextid
+                        JOIN {context} c_course ON c_course.instanceid = :courseid
+                                               AND c_course.contextlevel = :coursecontextlevel
+                        WHERE c_rl.path = c_course.path OR $pathmatch",
+            $params
+        );
+
+        foreach ($records as $record) {
+            if ($record->course == SITEID) {
+                // Site LTI types or registrations are not backed up except for their name (which is visible).
+                // Predefined course types can be backed up.
+                $allowedkeys = ['id', 'course', 'name', 'toolproxyid'];
+                foreach ($record as $key => $value) {
+                    if (!in_array($key, $allowedkeys)) {
+                        $record->$key = null;
+                    }
+                }
+            }
+        }
+
+        return $records;
+    }
+}
+
+/**
+ * Structure step in charge of constructing the ltixs.xml file for all the LTI resource links.
+ *
+ * @copyright  2025 Shamim Rezaei <shamim@moodle.com>
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class backup_ltixs_structure_step extends backup_structure_step {
+    #[\Override]
+    protected function define_structure() {
+        // To know if we are including userinfo.
+        if ($this->setting_exists('userinfo')) {
+            $userinfo = $this->get_setting_value('userinfo');
+        } else if ($this->setting_exists('users')) {
+            $userinfo = $this->get_setting_value('users');
+        } else {
+            // Default to true if the setting does not exist.
+            $userinfo = true;
+        }
+
+        // Define each element separated.
+        $resourcelinks = new backup_nested_element('ltiresourcelinks');
+        $resourcelink = new backup_nested_element('ltiresourcelink', ['id'], [
+            'typeid',
+            'component',
+            'itemtype',
+            'itemid',
+            'contextid',
+            'url',
+            'title',
+            'text',
+            'textformat',
+            'gradable',
+            'launchcontainer',
+            'customparams',
+            'icon',
+        ]);
+
+        $ltisubmissions = new backup_nested_element('ltisubmissions');
+        $ltisubmission = new backup_nested_element('ltisubmission', ['id'], [
+            'userid',
+            'datesubmitted',
+            'dateupdated',
+            'gradepercent',
+            'originalgrade',
+            'launchid',
+            'state',
+        ]);
+
+        // Build the tree.
+        $resourcelinks->add_child($resourcelink);
+        $resourcelink->add_child($ltisubmissions);
+        $ltisubmissions->add_child($ltisubmission);
+
+        // Define sources.
+        $resourcelink->set_source_table('lti_resource_link', ['contextid' => backup::VAR_CONTEXTID]);
+
+        // All the rest of elements only happen if we are including user info.
+        if ($userinfo) {
+            // TODO: The following need to be updated to not use `ltiid`. I assumed it refers to the lti_resource_link.
+            $ltisubmission->set_source_table('lti_submission', ['ltiid' => backup::VAR_PARENTID]);
+        }
+
+        // Define id annotations.
+        //$resourcelink->annotate_ids('lti_types', 'typeid');
+        // We don't need to annotate itemid here. It will be mapped to the correct itemid during restore.
+        $ltisubmission->annotate_ids('user', 'userid');
+
+        // Add support for ltix plugin structures.
+        $this->add_plugin_structure('ltixsource', $resourcelink, false);
+        $this->add_plugin_structure('ltixservice', $resourcelink, true);
+
+        return $resourcelinks;
+    }
+}
