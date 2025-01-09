@@ -214,7 +214,12 @@ abstract class restore_activity_task extends restore_task {
             $this->add_step(new restore_xapistate_structure_step('activity_xapistate', 'xapistate.xml'));
         }
 
-        // At the end, mark it as built
+        // The ltixs (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new restore_ltixs_structure_step('activity_ltixs', 'ltixs.xml'));
+        }
+
+        // At the end, mark it as built.
         $this->built = true;
     }
 

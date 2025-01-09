@@ -165,7 +165,12 @@ abstract class backup_block_task extends backup_task {
             $this->add_step(new backup_comments_structure_step('block_comments', 'comments.xml'));
         }
 
-        // Generate the inforef file (must be after ALL steps gathering annotations of ANY type)
+        // Generate the ltixs file (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new backup_ltixs_structure_step('block_ltixs', 'ltixs.xml'));
+        }
+
+        // Generate the inforef file (must be after ALL steps gathering annotations of ANY type).
         $this->add_step(new backup_inforef_structure_step('block_inforef', 'inforef.xml'));
 
         // Migrate the already exported inforef entries to final ones

@@ -142,6 +142,12 @@ class backup_course_task extends backup_task {
             $this->add_step(new backup_contentbankcontent_structure_step('course_contentbank', 'contentbank.xml'));
         }
 
+        // Generate the ltixtypes and ltixs files (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new backup_ltixtypes_structure_step('ltix_types', 'ltixtypes.xml'));
+            $this->add_step(new backup_ltixs_structure_step('course_ltixs', 'ltixs.xml'));
+        }
+
         // At the end, mark it as built
         $this->built = true;
     }

@@ -98,6 +98,11 @@ abstract class restore_block_task extends restore_task {
             $this->add_step(new restore_comments_structure_step('block_comments', 'comments.xml'));
         }
 
+        // The ltixs (conditionally).
+        if ($this->get_setting_value('ltix')) {
+            $this->add_step(new restore_ltixs_structure_step('block_ltixs', 'ltixs.xml'));
+        }
+
         // Search reindexing (if enabled).
         if (\core_search\manager::is_indexing_enabled()) {
             $wholecourse = $this->get_target() == backup::TARGET_NEW_COURSE;
