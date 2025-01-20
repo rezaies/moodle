@@ -129,4 +129,16 @@ class restore_lti_activity_task extends restore_activity_task {
 
         return $rules;
     }
+
+    /**
+     * Returns the itemname for the ltiresourcelink mapping.
+     *
+     * @param string $itemtype The type of item, not used here.
+     * @return string The itemname for the ltiresourcelink mapping.
+     */
+    public function get_ltiresourcelink_mapping_itemname($itemtype) {
+        // The itemname for the ltiresourcelink mapping is always 'course_module'.
+        return 'course_module';
+
+    }
 }
