@@ -15,13 +15,13 @@ Feature: Add tools
       | user | course | role |
       | teacher1 | C1 | editingteacher |
     # A site tool configured to show as a preconfigured tool and in the activity chooser.
-    And the following "mod_lti > tool types" exist:
+    And the following "core_ltix > tool types" exist:
       | name            | baseurl                                   | coursevisible | state |
-      | Teaching Tool 1 | /mod/lti/tests/fixtures/tool_provider.php | 2             | 1     |
+      | Teaching Tool 1 | /ltix/tests/fixtures/tool_provider.php | 2             | 1     |
     # A course tool in course 1.
-    And the following "mod_lti > course tools" exist:
+    And the following "core_ltix > course tools" exist:
       | name          | baseurl                                   | course |
-      | Course tool 1 | /mod/lti/tests/fixtures/tool_provider.php | C1     |
+      | Course tool 1 | /ltix/tests/fixtures/tool_provider.php | C1     |
 
   @javascript
   Scenario: Add a site tool via the activity picker
@@ -60,11 +60,11 @@ Feature: Add tools
   Scenario: Editing a (deprecated) manually configured activity instance, confirming that config changes aren't possible
     Given the following "activities" exist:
       | activity | name          | course | toolurl                                                  |
-      | lti      | A manual tool | C1     | /mod/lti/tests/fixtures/ims_cartridge_basic_lti_link.xml |
+      | lti      | A manual tool | C1     | /ltix/tests/fixtures/ims_cartridge_basic_lti_link.xml |
     # Add a course tool with the same URL as that of the manually configured instance (the tool URL found in the above cartridge).
     # This would normally be domain-matched during edit, resulting in the assignment of a preconfigured tool to the instance.
     # In this case, because config changes and domain matching are disabled, the test confirms this doesn't take place.
-    And the following "mod_lti > course tools" exist:
+    And the following "core_ltix > course tools" exist:
       | name          | baseurl                                 | course | lti_sendname | lti_sendemailaddr | lti_acceptgrades |
       | Course tool 2 | http://www.example.com/lti/provider.php | C1     | 0            | 1                 | 2                |
     When I am on the "A manual tool" "lti activity editing" page logged in as teacher1

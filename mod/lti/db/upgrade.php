@@ -59,6 +59,8 @@
 function xmldb_lti_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
 
+    require_once($CFG->dirroot . '/mod/lti/db/upgradelib.php');
+
     $dbman = $DB->get_manager();
 
     // Automatically generated Moodle v4.2.0 release upgrade line.
@@ -121,6 +123,63 @@ function xmldb_lti_upgrade($oldversion) {
 
     // Automatically generated Moodle v4.5.0 release upgrade line.
     // Put any upgrade step following this.
+    if ($oldversion < 2024042201) {
+        // Capabilities have been renamed - modify any existing roles with custom changes.
+
+        // The following capabilities have already been assigned to all relevant roles at site context (during core upgrade)
+        // Now, ensure any custom role overrides are updated such that they reflect the new capability, at which point any users
+        // who had the old capability now have the replacement capability in any relevant contexts.
+        $capmapping = [
+            'mod/lti:manage' => 'moodle/ltix:manage',
+            'mod/lti:addcoursetool' => 'moodle/ltix:addcoursetool',
+            'mod/lti:addpreconfiguredinstance' => 'moodle/ltix:viewcoursetools',
+            'mod/lti:requesttooladd' => 'moodle/ltix:requesttooladd',
+        ];
+        foreach ($capmapping as $oldcap => $newcap) {
+
+            $sql = "UPDATE {role_capabilities}
+                   SET capability = :newcapname
+                 WHERE capability = :oldcapname
+                   AND contextid != :sitecontextid
+                   AND id NOT IN (SELECT rc.id
+                                    FROM (SELECT id, roleid, contextid, capability FROM {role_capabilities}) AS rc
+                                    JOIN {role} r ON r.id = rc.roleid
+                                   WHERE rc.capability = :newcapname2
+                                     AND rc.contextid = :sitecontextid2)";
+            $params = [
+                'newcapname' => $newcap,
+                'oldcapname' => $oldcap,
+                'sitecontextid' => 1,
+                'newcapname2' => $newcap,
+                'sitecontextid2' => 1,
+            ];
+            $DB->execute($sql, $params);
+        }
+
+        // The capability 'moodle/ltix:admin' is not given to any roles by default, so we can migrate all records unconditionally.
+        $sql = "UPDATE {role_capabilities}
+                   SET capability = :newcapname
+                 WHERE capability = :oldcapname";
+        $params = ['newcapname' => 'moodle/ltix:admin', 'oldcapname' => 'mod/lti:admin'];
+        $DB->execute($sql, $params);
+
+        // Lti savepoint reached.
+        upgrade_mod_savepoint(true, 2024042201, 'lti');
+
+    }
+
+    if ($oldversion < 2025020301) {
+        // Force-load the new mod_lti placement types to ensure the migration helper can access them.
+        // Normally, they'd be loaded after plugin upgrade. Here, they're needed by lti_migration_upgrade_helper.
+        \core_ltix\local\placement\placements_manager::update_placement_types('mod_lti');
+
+        $migrationhelper = new \mod_lti\lti_migration_upgrade_helper();
+        $migrationhelper->create_default_placements();
+        $migrationhelper->create_resource_links();
+
+        // Lti savepoint reached.
+        upgrade_mod_savepoint(true, 2025020301, 'lti');
+    }
 
     // Automatically generated Moodle v5.0.0 release upgrade line.
     // Put any upgrade step following this.

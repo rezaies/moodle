@@ -614,6 +614,7 @@ function upgrade_stale_php_files_present(): bool {
  */
 function upgrade_component_updated(string $component, string $messageplug = '',
         bool $coreinstall = false): void {
+
     if (!$coreinstall) {
         update_capabilities($component);
         core_upgrade_time::record_detail('update_capabilities');
@@ -642,6 +643,9 @@ function upgrade_component_updated(string $component, string $messageplug = '',
     }
     core_tag_area::reset_definitions_for_component($component);
     core_upgrade_time::record_detail('core_tag_area::reset_definitions_for_component');
+
+    \core_ltix\local\placement\placements_manager::update_placement_types($component);
+    core_upgrade_time::record_detail('\core_ltix\local\placement\placements_manager::update_placement_types');
 }
 
 /**

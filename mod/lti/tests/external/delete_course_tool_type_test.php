@@ -17,12 +17,14 @@
 namespace mod_lti\external;
 
 use core_external\external_api;
+use core_ltix\helper;
+use externallib_advanced_testcase;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
+require_once($CFG->dirroot . '/webservice/tests/helpers.php');
 
 /**
  * PHPUnit tests for delete_course_tool_type external function.
@@ -32,7 +34,7 @@ require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @coversDefaultClass \mod_lti\external\delete_course_tool_type
  */
-final class delete_course_tool_type_test extends \mod_lti_testcase {
+final class delete_course_tool_type_test extends externallib_advanced_testcase {
 
     /**
      * Test delete_course_tool() for a course tool.
@@ -45,9 +47,9 @@ final class delete_course_tool_type_test extends \mod_lti_testcase {
         $editingteacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
         $this->setUser($editingteacher);
 
-        $typeid = lti_add_type(
+        $typeid = helper::add_type(
             (object) [
-                'state' => LTI_TOOL_STATE_CONFIGURED,
+                'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
                 'course' => $course->id
             ],
             (object) [
@@ -58,6 +60,7 @@ final class delete_course_tool_type_test extends \mod_lti_testcase {
         );
 
         $data = delete_course_tool_type::execute($typeid);
+        $this->assertDebuggingCalled();
         $data = external_api::clean_returnvalue(delete_course_tool_type::execute_returns(), $data);
 
         $this->assertTrue($data);
@@ -74,9 +77,24 @@ final class delete_course_tool_type_test extends \mod_lti_testcase {
         $editingteacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
         $this->setUser($editingteacher);
 
-        $type = $this->generate_tool_type(123); // Creates a site tool.
+        $typeid = helper::add_type(
+            (object) [
+                'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            ],
+            (object) [
+                'lti_typename' => "My site tool",
+                'lti_toolurl' => 'http://example.com',
+                'lti_ltiversion' => 'LTI-1p0'
+            ]
+        );
+        $type = helper::get_type($typeid);
 
-        $this->expectException(\invalid_parameter_exception::class);
-        delete_course_tool_type::execute($type->id);
+        try {
+            delete_course_tool_type::execute($type->id);
+        } catch (\Exception $e) {
+        } finally {
+            $this->assertInstanceOf(\invalid_parameter_exception::class, $e);
+        }
+        $this->assertDebuggingCalled();
     }
 }

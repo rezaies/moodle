@@ -25,6 +25,8 @@
  */
 namespace mod_lti;
 
+use core_ltix\local\lticore\models\resource_link;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -89,6 +91,14 @@ final class lib_test extends \advanced_testcase {
         $completiondata = $completion->get_data($cm);
         $this->assertEquals(1, $completiondata->completionstate);
 
+        // Verify LTI links removed.
+        $ltiresourcelink = resource_link::get_record([
+            'itemid' => $lti->id,
+            'component' => 'mod_lti',
+            'itemtype' => 'mod_lti:activityplacement'
+        ]);
+        $this->assertNotEquals(null, $ltiresourcelink->to_record());
+
     }
 
     /**
@@ -104,6 +114,14 @@ final class lib_test extends \advanced_testcase {
 
         // Must not throw notices.
         course_delete_module($cm->id);
+
+        // Verify LTI links removed.
+        $ltiresourcelink = resource_link::get_record([
+            'itemid' => $lti->id,
+            'component' => 'mod_lti',
+            'itemtype' => 'mod_lti:activityplacement'
+        ]);
+        $this->assertEquals(null, $ltiresourcelink);
     }
 
     public function test_lti_core_calendar_provide_event_action(): void {
@@ -353,8 +371,8 @@ final class lib_test extends \advanced_testcase {
             'ltiversion' => 'LTI-1p0',
             'timecreated' => $time,
             'timemodified' => $time,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER
         ];
         $sitetoolrecordnonchooser = (object) [
             'name' => 'Site level tool which is NOT available in the course activity chooser',
@@ -364,8 +382,8 @@ final class lib_test extends \advanced_testcase {
             'ltiversion' => 'LTI-1p0',
             'timecreated' => $time,
             'timemodified' => $time,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'coursevisible' => LTI_COURSEVISIBLE_PRECONFIGURED
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_PRECONFIGURED
         ];
         $course1toolrecord = (object) [
             'name' => 'Course created tool which is available in the activity chooser',
@@ -375,8 +393,8 @@ final class lib_test extends \advanced_testcase {
             'ltiversion' => 'LTI-1p0',
             'timecreated' => $time,
             'timemodified' => $time,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER
         ];
         $course2toolrecord = (object) [
             'name' => 'Course created tool which is available in the activity chooser',
@@ -386,8 +404,8 @@ final class lib_test extends \advanced_testcase {
             'ltiversion' => 'LTI-1p0',
             'timecreated' => $time,
             'timemodified' => $time,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER
         ];
         $tool1id = $DB->insert_record('lti_types', $sitetoolrecord);
         $tool2id = $DB->insert_record('lti_types', $sitetoolrecordnonchooser);
@@ -410,7 +428,7 @@ final class lib_test extends \advanced_testcase {
             MOD_PURPOSE_CONTENT
         );
 
-        // The lti_get_lti_types_by_course method (used by the callbacks) assumes the global user.
+        // The get_lti_types_by_course method (used by the callbacks) assumes the global user.
         $this->setUser($teacher);
 
         // Teacher in course1 should be able to see the site preconfigured tool and the tool created in course1.

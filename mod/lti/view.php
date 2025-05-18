@@ -69,11 +69,11 @@ if ($l) {  // Two ways to specify the module.
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
 $typeid = $lti->typeid;
-if (empty($typeid) && ($tool = lti_get_tool_by_url_match($lti->toolurl))) {
+if (empty($typeid) && ($tool = \core_ltix\helper::get_tool_by_url_match($lti->toolurl))) {
     $typeid = $tool->id;
 }
 if ($typeid) {
-    $toolconfig = lti_get_type_config($typeid);
+    $toolconfig = \core_ltix\helper::get_type_config($typeid);
     $missingtooltype = empty($toolconfig);
     if (!$missingtooltype) {
         $toolurl = $toolconfig['toolurl'];
@@ -104,12 +104,12 @@ if (!empty($missingtooltype)) {
     throw new moodle_exception('tooltypenotfounderror', 'mod_lti');
 }
 
-$launchcontainer = lti_get_launch_container($lti, $toolconfig);
+$launchcontainer = \core_ltix\helper::get_launch_container($lti, $toolconfig);
 
-if ($launchcontainer == LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS) {
+if ($launchcontainer == \core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS) {
     $PAGE->set_pagelayout('incourse');
     $PAGE->blocks->show_only_fake_blocks(); // Disable blocks for layouts which do include pre-post blocks.
-} else if ($launchcontainer == LTI_LAUNCH_CONTAINER_REPLACE_MOODLE_WINDOW) {
+} else if ($launchcontainer == \core_ltix\constants::LTI_LAUNCH_CONTAINER_REPLACE_MOODLE_WINDOW) {
     if (!$forceview) {
         $url = new moodle_url('/mod/lti/launch.php', array('id' => $cm->id));
         redirect($url);
@@ -137,10 +137,10 @@ $activityheader->set_attrs($header ?? []);
 echo $OUTPUT->header();
 
 if ($typeid) {
-    $config = lti_get_type_type_config($typeid);
+    $config = \core_ltix\helper::get_type_type_config($typeid);
 } else {
     $config = new stdClass();
-    $config->lti_ltiversion = LTI_VERSION_1;
+    $config->lti_ltiversion = \core_ltix\constants::LTI_VERSION_1;
 }
 $launchurl = new moodle_url('/mod/lti/launch.php', ['id' => $cm->id, 'triggerview' => 0]);
 if ($action) {
@@ -150,7 +150,7 @@ if ($foruserid) {
     $launchurl->param('user', $foruserid);;
 }
 unset($SESSION->lti_initiatelogin_status);
-if (($launchcontainer == LTI_LAUNCH_CONTAINER_WINDOW)) {
+if (($launchcontainer == \core_ltix\constants::LTI_LAUNCH_CONTAINER_WINDOW)) {
     if (!$forceview) {
         echo "<script language=\"javascript\">//<![CDATA[\n";
         echo "window.open('{$launchurl->out(true)}','lti-$cm->id');";

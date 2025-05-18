@@ -3693,6 +3693,7 @@ function course_get_user_navigation_options($context, $course = null) {
         'tags' => false,
         'communication' => false,
         'overview' => false,
+        'ltix' => false,
     ];
 
     $options->blogs = !empty($CFG->enableblogs) &&
@@ -3777,6 +3778,9 @@ function course_get_user_navigation_options($context, $course = null) {
         $options->overview = has_capability('moodle/course:viewoverview', $context);
     }
 
+    if (has_capability('moodle/ltix:viewcoursetools', $context)) {
+        $options->ltix = true;
+    }
     return $options;
 }
 

@@ -336,4 +336,10 @@ function xmldb_main_install() {
     // Create default core site admin presets.
     require_once($CFG->dirroot . '/admin/presets/classes/helper.php');
     \core_adminpresets\helper::create_default_presets();
+
+    require_once($CFG->dirroot . '/ltix/classes/local/placement/placements_manager.php');
+    \core_ltix\local\placement\placements_manager::update_placement_types();
+
+    // Create core lti keys.
+    \core_ltix\oauth_helper::verify_private_key();
 }

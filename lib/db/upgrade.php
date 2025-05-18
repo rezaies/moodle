@@ -1684,5 +1684,172 @@ function xmldb_main_upgrade($oldversion) {
     // Automatically generated Moodle v5.0.0 release upgrade line.
     // Put any upgrade step following this.
 
+    if ($oldversion < 2025051900.01) {
+        // Move mod_lti keys into new core lti config.
+        if (!empty(get_config('mod_lti', 'kid')) && !empty(get_config('mod_lti', 'privatekey'))) {
+            set_config('kid', get_config('mod_lti', 'kid'), 'core_ltix');
+            set_config('privatekey', get_config('mod_lti', 'privatekey'), 'core_ltix');
+            set_config('kid', null, 'mod_lti');
+            set_config('privatekey', null, 'mod_lti');
+        }
+
+        // Rename the ltiservice_gradebookservices table so that it's not removed during the uninstallation of that plugin.
+        // This permits data migration to the replacement ltixservice_gradebookservices during that plugin's install.php.
+        if (!$dbman->table_exists(new xmldb_table('ltixservice_gradebookservices'))) {
+            // Define table ltiservice_gradebookservices to be renamed to tmp_ltiservice_gradebookservices.
+            $table = new xmldb_table('ltiservice_gradebookservices');
+
+            // Launch rename table for ltiservice_gradebookservices.
+            $dbman->rename_table($table, 'tmp_ltiservice_gradebookservices');
+        }
+
+        $servicetypes = ['basicoutcomes', 'gradebookservices', 'memberships', 'profile', 'toolproxy', 'toolsettings'];
+        foreach ($servicetypes as $type) {
+            $versionfile = $CFG->dirroot . "mod/lti/service/{$type}/version.php";
+
+            if (!file_exists($versionfile)) {
+                uninstall_plugin('ltiservice', $type);
+            }
+        }
+
+        // Move all the service-specific type config for ltiservice_xx plugins to ltixservice_xx.
+        // Note: this takes a conservative approach and only migrates the known config for shipped ltiservice plugins.
+        // Any non-core service plugins, if present, will need to provide their own upgrade path as part of migrating their plugin.
+        $pluginconfigoptions = ['ltiservice_gradesynchronization', 'ltiservice_memberships', 'ltiservice_toolsettings'];
+        [$insql, $inparams] = $DB->get_in_or_equal($pluginconfigoptions, SQL_PARAMS_NAMED, 'name');
+        $sql = "UPDATE {lti_types_config}
+                   SET name = REPLACE(name, :oldprefix, :newprefix)
+                 WHERE name " . $insql;
+        $params = ['oldprefix' => 'ltiservice_', 'newprefix' => 'ltixservice_'];
+        $DB->execute($sql, array_merge($params, $inparams));
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2025051900.01);
+    }
+
+    if ($oldversion < 2025051900.02) {
+        // Define table lti_resource_link to be created.
+        $table = new xmldb_table('lti_resource_link');
+
+        // Adding fields to table lti_resource_link.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('typeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('component', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('itemtype', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('itemid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('url', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('title', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('text', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('textformat', XMLDB_TYPE_INTEGER, '4', null, null, null, '0');
+        $table->add_field('gradable', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('launchcontainer', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('customparams', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('icon', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('servicesalt', XMLDB_TYPE_CHAR, '40', null, null, null, null);
+
+        // Adding keys to table lti_resource_link.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('typeid', XMLDB_KEY_FOREIGN, ['typeid'], 'lti_types', ['id']);
+        $table->add_key('contextid', XMLDB_KEY_FOREIGN, ['contextid'], 'context', ['id']);
+
+        // Adding indexes to table lti_resource_link.
+        $table->add_index('componentlink', XMLDB_INDEX_UNIQUE, ['component', 'itemtype', 'itemid', 'contextid']);
+
+        // Conditionally launch create table for lti_resource_link.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2025051900.02);
+    }
+
+    if ($oldversion < 2025051900.04) {
+
+        // Define table lti_placement_type to be created.
+        $table = new xmldb_table('lti_placement_type');
+
+        // Adding fields to table lti_placement_type.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('component', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table lti_placement_type.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('type', XMLDB_KEY_UNIQUE, ['type']);
+
+        // Adding indexes to table lti_placement_type.
+        $table->add_index('component', XMLDB_INDEX_NOTUNIQUE, ['component']);
+
+        // Conditionally launch create table for lti_placement_type.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table lti_placement to be created.
+        $table = new xmldb_table('lti_placement');
+
+        // Adding fields to table lti_placement.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('toolid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('placementtypeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table lti_placement.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('toolid', XMLDB_KEY_FOREIGN, ['toolid'], 'lti_types', ['id']);
+        $table->add_key('placementtypeid', XMLDB_KEY_FOREIGN, ['placementtypeid'], 'lti_placement_type', ['id']);
+
+        // Adding indexes to table lti_placement.
+        $table->add_index('toolplacementtype', XMLDB_INDEX_UNIQUE, ['toolid', 'placementtypeid']);
+
+        // Conditionally launch create table for lti_placement.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table lti_placement_config to be created.
+        $table = new xmldb_table('lti_placement_config');
+
+        // Adding fields to table lti_placement_config.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('placementid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('value', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table lti_placement_config.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('placementid', XMLDB_KEY_FOREIGN, ['placementid'], 'lti_placement', ['id']);
+        $table->add_key('placementidname', XMLDB_KEY_UNIQUE, ['placementid', 'name']);
+
+        // Conditionally launch create table for lti_placement_config.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table lti_placement_status to be created.
+        $table = new xmldb_table('lti_placement_status');
+
+        // Adding fields to table lti_placement_status.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('placementid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('contextid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table lti_placement_status.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('placementid', XMLDB_KEY_FOREIGN, ['placementid'], 'lti_placement', ['id']);
+        $table->add_key('contextid', XMLDB_KEY_FOREIGN, ['contextid'], 'context', ['id']);
+        $table->add_key('placementcontext', XMLDB_KEY_UNIQUE, ['placementid', 'contextid']);
+
+        // Conditionally launch create table for lti_placement_status.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Main savepoint reached.
+        upgrade_main_savepoint(true, 2025051900.04);
+    }
+
     return true;
 }

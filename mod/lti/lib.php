@@ -46,6 +46,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use core_ltix\local\lticore\models\resource_link;
+
 defined('MOODLE_INTERNAL') || die;
 
 require_once(__DIR__ . '/deprecatedlib.php');
@@ -92,7 +94,7 @@ function lti_add_instance($lti, $mform) {
         $lti->toolurl = '';
     }
 
-    lti_load_tool_if_cartridge($lti);
+    \core_ltix\helper::load_tool_if_cartridge($lti);
 
     $lti->timecreated = time();
     $lti->timemodified = $lti->timecreated;
@@ -101,20 +103,20 @@ function lti_add_instance($lti, $mform) {
         $lti->typeid = null;
     }
 
-    lti_force_type_config_settings($lti, lti_get_type_config_by_instance($lti));
+    \core_ltix\helper::force_type_config_settings($lti, \core_ltix\helper::get_type_config_by_instance($lti));
 
     if (empty($lti->typeid) && isset($lti->urlmatchedtypeid)) {
         $lti->typeid = $lti->urlmatchedtypeid;
     }
 
-    if (!isset($lti->instructorchoiceacceptgrades) || $lti->instructorchoiceacceptgrades != LTI_SETTING_ALWAYS) {
+    if (!isset($lti->instructorchoiceacceptgrades) || $lti->instructorchoiceacceptgrades != \core_ltix\constants::LTI_SETTING_ALWAYS) {
         // The instance does not accept grades back from the provider, so set to "No grade" value 0.
         $lti->grade = 0;
     }
 
     $lti->id = $DB->insert_record('lti', $lti);
 
-    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == LTI_SETTING_ALWAYS) {
+    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == \core_ltix\constants::LTI_SETTING_ALWAYS) {
         if (!isset($lti->cmidnumber)) {
             $lti->cmidnumber = '';
         }
@@ -122,13 +124,33 @@ function lti_add_instance($lti, $mform) {
         lti_grade_item_update($lti);
     }
 
-    $services = lti_get_services();
+    $services = \core_ltix\helper::get_services();
     foreach ($services as $service) {
         $service->instance_added( $lti );
     }
 
     $completiontimeexpected = !empty($lti->completionexpected) ? $lti->completionexpected : null;
     \core_completion\api::update_completion_date_event($lti->coursemodule, 'lti', $lti->id, $completiontimeexpected);
+
+    $ltiresourcelink = [
+        'typeid' => $lti->typeid,
+        'component' => 'mod_lti',
+        'itemtype' => 'mod_lti:activityplacement',
+        'itemid' => $lti->id,
+        'contextid' => $lti->coursemodule,
+        'url' => $lti->toolurl,
+        'title' => $lti->name,
+        'text' => $lti->intro,
+        'textformat' => $lti->introformat,
+        'gradable' => $lti->instructorchoiceacceptgrades,
+        'servicesalt' => $lti->servicesalt,
+        ...(isset($lti->launchcontainer) ? ['launchcontainer' => $lti->launchcontainer] : []),
+        ...(!empty($lti->icon) ? ['icon' => $lti->icon] : []),
+        ...(!empty($lti->instructorcustomparameters) ? ['customparams' => $lti->instructorcustomparameters] : []),
+    ];
+
+    $rl = new resource_link(0, (object) $ltiresourcelink);
+    $rl->save();
 
     return $lti->id;
 }
@@ -145,7 +167,7 @@ function lti_update_instance($lti, $mform) {
     global $DB, $CFG;
     require_once($CFG->dirroot.'/mod/lti/locallib.php');
 
-    lti_load_tool_if_cartridge($lti);
+    \core_ltix\helper::load_tool_if_cartridge($lti);
 
     $lti->timemodified = time();
     $lti->id = $lti->instance;
@@ -158,9 +180,9 @@ function lti_update_instance($lti, $mform) {
         $lti->showdescriptionlaunch = 0;
     }
 
-    lti_force_type_config_settings($lti, lti_get_type_config_by_instance($lti));
+    \core_ltix\helper::force_type_config_settings($lti, \core_ltix\helper::get_type_config_by_instance($lti));
 
-    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == LTI_SETTING_ALWAYS) {
+    if (isset($lti->instructorchoiceacceptgrades) && $lti->instructorchoiceacceptgrades == \core_ltix\constants::LTI_SETTING_ALWAYS) {
         lti_grade_item_update($lti);
     } else {
         // Instance is no longer accepting grades from Provider, set grade to "No grade" value 0.
@@ -174,13 +196,38 @@ function lti_update_instance($lti, $mform) {
         $lti->typeid = $lti->urlmatchedtypeid;
     }
 
-    $services = lti_get_services();
+    $services = \core_ltix\helper::get_services();
     foreach ($services as $service) {
         $service->instance_updated( $lti );
     }
 
     $completiontimeexpected = !empty($lti->completionexpected) ? $lti->completionexpected : null;
     \core_completion\api::update_completion_date_event($lti->coursemodule, 'lti', $lti->id, $completiontimeexpected);
+
+    $rl = new resource_link();
+    $ltiresourcelink = $rl->get_record(['itemid' => $lti->id, 'component' => 'mod_lti', 'itemtype' => 'mod_lti:activityplacement']);
+
+    $ltiresourcelinkformvalues = [
+        'typeid' => $lti->typeid,
+        'component' => 'mod_lti',
+        'itemtype' => 'mod_lti:activityplacement',
+        'itemid' => $lti->id,
+        'contextid' => $lti->coursemodule,
+        'url' => $lti->toolurl,
+        'title' => $lti->name,
+        'text' => $lti->intro,
+        'textformat' => $lti->introformat,
+        'gradable' => $lti->instructorchoiceacceptgrades,
+        'servicesalt' => $lti->servicesalt,
+        ...(!isset($lti->launchcontainer) ? ['launchcontainer' => $lti->launchcontainer] : []),
+        ...(!empty($lti->icon) ? ['icon' => $lti->icon] : []),
+        ...(!empty($lti->instructorcustomparameters) ? ['customparams' => $lti->instructorcustomparameters] : []),
+    ];
+
+    foreach ($ltiresourcelinkformvalues as $name => $value) {
+        $ltiresourcelink->set($name, $value);
+    }
+    $ltiresourcelink->update();
 
     return $DB->update_record('lti', $lti);
 }
@@ -217,10 +264,13 @@ function lti_delete_instance($id) {
 
     // We must delete the module record after we delete the grade item.
     if ($DB->delete_records("lti", array("id" => $basiclti->id)) ) {
-        $services = lti_get_services();
+        $services = \core_ltix\helper::get_services();
         foreach ($services as $service) {
             $service->instance_deleted( $id );
         }
+        $rl = new resource_link();
+        $ltiresourcelink = $rl->get_record(['itemid' => $id, 'component' => 'mod_lti', 'itemtype' => 'mod_lti:activityplacement']);
+        $ltiresourcelink->delete();
         return true;
     }
     return false;
@@ -291,8 +341,8 @@ function mod_lti_get_all_content_items(\core_course\local\entity\content_item $d
 
     $types = [];
 
-    foreach (lti_get_lti_types() as $ltitype) {
-        if ($ltitype->coursevisible != LTI_COURSEVISIBLE_ACTIVITYCHOOSER) {
+    foreach (\core_ltix\helper::get_lti_types() as $ltitype) {
+        if ($ltitype->coursevisible != \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER) {
             continue;
         }
         $type           = new stdClass();
@@ -360,16 +410,16 @@ function lti_get_coursemodule_info($coursemodule) {
     }
 
     if (!empty($lti->typeid)) {
-        $toolconfig = lti_get_type_config($lti->typeid);
-    } else if ($tool = lti_get_tool_by_url_match($lti->toolurl)) {
-        $toolconfig = lti_get_type_config($tool->id);
+        $toolconfig = \core_ltix\helper::get_type_config($lti->typeid);
+    } else if ($tool = \core_ltix\helper::get_tool_by_url_match($lti->toolurl)) {
+        $toolconfig = \core_ltix\helper::get_type_config($tool->id);
     } else {
         $toolconfig = array();
     }
 
     // We want to use the right icon based on whether the
     // current page is being requested over http or https.
-    if (lti_request_is_using_ssl() &&
+    if (\core_ltix\helper::request_is_using_ssl() &&
         (!empty($lti->secureicon) || (isset($toolconfig['secureicon']) && !empty($toolconfig['secureicon'])))) {
         if (!empty($lti->secureicon)) {
             $info->iconurl = new moodle_url($lti->secureicon);
@@ -383,8 +433,8 @@ function lti_get_coursemodule_info($coursemodule) {
     }
 
     // Does the link open in a new window?
-    $launchcontainer = lti_get_launch_container($lti, $toolconfig);
-    if ($launchcontainer == LTI_LAUNCH_CONTAINER_WINDOW) {
+    $launchcontainer = \core_ltix\helper::get_launch_container($lti, $toolconfig);
+    if ($launchcontainer == \core_ltix\constants::LTI_LAUNCH_CONTAINER_WINDOW) {
         $launchurl = new moodle_url('/mod/lti/launch.php', array('id' => $coursemodule->id));
         $info->onclick = "window.open('" . $launchurl->out(false) . "', 'lti-".$coursemodule->id."'); return false;";
     }
@@ -505,25 +555,29 @@ function lti_uninstall() {
 /**
  * Returns available Basic LTI types
  *
+* @deprecated since Moodle 4.4
  * @return array of basicLTI types
  */
 function lti_get_lti_types() {
-    global $DB;
+    debugging(__FUNCTION__ . '() is deprecated. Please use \core_ltix\helper::get_config() instead.',
+    DEBUG_DEVELOPER);
 
-    return $DB->get_records('lti_types', null, 'state DESC, timemodified DESC');
+    return \core_ltix\helper::get_lti_types();
 }
 
 /**
  * Returns available Basic LTI types that match the given
  * tool proxy id
  *
+ * @deprecated since Moodle 4.4
  * @param int $toolproxyid Tool proxy id
  * @return array of basicLTI types
  */
 function lti_get_lti_types_from_proxy_id($toolproxyid) {
-    global $DB;
+    debugging(__FUNCTION__ . '() is deprecated. Please use \core_ltix\helper::get_config() instead.',
+    DEBUG_DEVELOPER);
 
-    return $DB->get_records('lti_types', array('toolproxyid' => $toolproxyid), 'state DESC, timemodified DESC');
+    return \core_ltix\helper::get_lti_types_from_proxy_id($toolproxyid);
 }
 
 /**
@@ -539,7 +593,7 @@ function lti_grade_item_update($basiclti, $grades = null) {
     require_once($CFG->libdir.'/gradelib.php');
     require_once($CFG->dirroot.'/mod/lti/servicelib.php');
 
-    if (!lti_accepts_grades($basiclti)) {
+    if (!core_ltix\local\ltiservice\service_helper::accepts_grades($basiclti)) {
         return 0;
     }
 
@@ -577,7 +631,7 @@ function lti_update_grades($basiclti, $userid=0, $nullifnone=true) {
     global $CFG;
     require_once($CFG->dirroot.'/mod/lti/servicelib.php');
     // LTI doesn't have its own grade table so the only thing to do is update the grade item.
-    if (lti_accepts_grades($basiclti)) {
+    if (core_ltix\local\ltiservice\service_helper::accepts_grades($basiclti)) {
         lti_grade_item_update($basiclti);
     }
 }
@@ -667,7 +721,7 @@ function lti_check_updates_since(cm_info $cm, $from, $filter = array()) {
     }
 
     // Now, teachers should see other students updates.
-    if (has_capability('mod/lti:manage', $cm->context)) {
+    if (has_capability('moodle/ltix:manage', $cm->context)) {
         $select = 'ltiid = :id AND (datesubmitted > :since1 OR dateupdated > :since2)';
         $params = array('id' => $cm->instance, 'since1' => $from, 'since2' => $from);
 
@@ -742,21 +796,4 @@ function mod_lti_core_calendar_provide_event_action(calendar_event $event,
         1,
         true
     );
-}
-
-/**
- * Extend the course navigation with an "LTI External tools" link which redirects to a list of all tools available for course use.
- *
- * @param settings_navigation $navigation The settings navigation object
- * @param stdClass $course The course
- * @param stdclass $context Course context
- * @return void
- */
-function mod_lti_extend_navigation_course($navigation, $course, $context): void {
-    if (has_capability('mod/lti:addpreconfiguredinstance', $context)) {
-        $url = new moodle_url('/mod/lti/coursetools.php', ['id' => $course->id]);
-        $settingsnode = navigation_node::create(get_string('courseexternaltools', 'mod_lti'), $url, navigation_node::TYPE_SETTING,
-            null, 'coursetools', new pix_icon('i/settings', ''));
-        $navigation->add_node($settingsnode);
-    }
 }

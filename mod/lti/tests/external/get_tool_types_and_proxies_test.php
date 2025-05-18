@@ -17,12 +17,14 @@
 namespace mod_lti\external;
 
 use core_external\external_api;
+use core_ltix\helper;
+use externallib_advanced_testcase;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
+require_once($CFG->dirroot . '/webservice/tests/helpers.php');
 
 /**
  * PHPUnit tests for get_tool_types_and_proxies external function.
@@ -32,25 +34,57 @@ require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
  * @copyright  2021 Catalyst IT
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class get_tool_types_and_proxies_test extends \mod_lti_testcase {
+final class get_tool_types_and_proxies_test extends externallib_advanced_testcase {
 
     /**
      * This method runs before every test.
      */
     public function setUp(): void {
-        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
+    }
+
+    /**
+     * Create a proxy for testing.
+     *
+     * @param string $uniqueid
+     * @return int the proxy id
+     */
+    protected function create_tool_proxy(string $uniqueid): int {
+        $config = (object) [
+            'lti_registrationurl' => $this->getExternalTestFileUrl("/proxy$uniqueid.html"),
+            'lti_registrationname' => "Test proxy $uniqueid",
+        ];
+        return helper::add_tool_proxy($config);
+    }
+
+    /**
+     * Create a fully configured tool, optionally based on a proxy.
+     * @param string $uniqueid
+     * @return int
+     */
+    protected function create_configured_tool(string $uniqueid, ?int $proxyid): int {
+        /** @var \mod_lti_generator $ltigenerator */
+        $ltigenerator = $this->getDataGenerator()->get_plugin_generator('mod_lti');
+
+        return $ltigenerator->create_tool_types([
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
+            'name' => "Test tool 1",
+            'description' => "Example description 1",
+            'toolproxyid' => $proxyid,
+            'baseurl' => $this->getExternalTestFileUrl("/test1.html"),
+        ]);
     }
 
     /**
      * Test get_tool_types_and_proxies.
      */
     public function test_mod_lti_get_tool_types_and_proxies(): void {
-        $proxy = $this->generate_tool_proxy(1);
-        $this->generate_tool_type(1, $proxy->id);
+        $proxyid = $this->create_tool_proxy('1');
+        $this->create_configured_tool('1', $proxyid);
 
         $data = get_tool_types_and_proxies::execute(0, false, 50, 0);
+        $this->assertDebuggingCalled();
         $data = external_api::clean_returnvalue(get_tool_types_and_proxies::execute_returns(), $data);
 
         $this->assertCount(1, $data['types']);
@@ -69,11 +103,12 @@ final class get_tool_types_and_proxies_test extends \mod_lti_testcase {
      */
     public function test_mod_lti_get_tool_types_and_proxies_with_multiple_pages(): void {
         for ($i = 0; $i < 3; $i++) {
-            $proxy = $this->generate_tool_proxy($i);
-            $this->generate_tool_type($i, $proxy->id);
+            $proxyid = $this->create_tool_proxy($i);
+            $this->create_configured_tool($i, $proxyid);
         }
 
         $data = get_tool_types_and_proxies::execute(0, false,  5, 0);
+        $this->assertDebuggingCalled();
         $data = external_api::clean_returnvalue(get_tool_types_and_proxies::execute_returns(), $data);
 
         $this->assertCount(2, $data['types']);
@@ -87,11 +122,12 @@ final class get_tool_types_and_proxies_test extends \mod_lti_testcase {
      */
     public function test_mod_lti_get_tool_types_and_proxies_with_multiple_pages_last_page(): void {
         for ($i = 0; $i < 6; $i++) {
-            $proxy = $this->generate_tool_proxy($i);
-            $this->generate_tool_type($i, $proxy->id);
+            $proxyid = $this->create_tool_proxy($i);
+            $this->create_configured_tool($i, $proxyid);
         }
 
         $data = get_tool_types_and_proxies::execute(0, false, 5, 10);
+        $this->assertDebuggingCalled();
         $data = external_api::clean_returnvalue(get_tool_types_and_proxies::execute_returns(), $data);
 
         $this->assertCount(2, $data['types']);
@@ -105,11 +141,12 @@ final class get_tool_types_and_proxies_test extends \mod_lti_testcase {
      */
     public function test_mod_lti_get_tool_types_and_proxies_without_pagination(): void {
         for ($i = 0; $i < 10; $i++) {
-            $proxy = $this->generate_tool_proxy($i);
-            $this->generate_tool_type($i, $proxy->id);
+            $proxyid = $this->create_tool_proxy($i);
+            $this->create_configured_tool($i, $proxyid);
         }
 
         $data = get_tool_types_and_proxies::execute(0, false,  0, 0);
+        $this->assertDebuggingCalled();
         $data = external_api::clean_returnvalue(get_tool_types_and_proxies::execute_returns(), $data);
 
         $this->assertCount(10, $data['types']);

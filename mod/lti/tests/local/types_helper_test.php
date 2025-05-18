@@ -34,13 +34,13 @@
 
 namespace mod_lti\local;
 
-use mod_lti_testcase;
+use core_ltix\lti_testcase;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->dirroot . '/mod/lti/locallib.php');
-require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
+require_once($CFG->dirroot . '/ltix/tests/lti_testcase.php');
 
 /**
  * Types helper tests.
@@ -48,9 +48,9 @@ require_once($CFG->dirroot . '/mod/lti/tests/mod_lti_testcase.php');
  * @package    mod_lti
  * @copyright  2023 Jake Dallimore <jrhdallimore@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @coversDefaultClass \mod_lti\local\types_helper
+ * @coversDefaultClass \mod_lti\local\helper
  */
-final class types_helper_test extends mod_lti_testcase {
+final class types_helper_test extends lti_testcase {
 
     /**
      * Test fetching tool types for a given course and user.
@@ -83,20 +83,20 @@ final class types_helper_test extends mod_lti_testcase {
         $ltigenerator->create_tool_types([
             'name' => 'site tool do not show',
             'baseurl' => 'http://example.com/tool/1',
-            'coursevisible' => LTI_COURSEVISIBLE_NO,
-            'state' => LTI_TOOL_STATE_CONFIGURED
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_NO,
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED
         ]);
         $ltigenerator->create_tool_types([
             'name' => 'site tool preconfigured only',
             'baseurl' => 'http://example.com/tool/2',
-            'coursevisible' => LTI_COURSEVISIBLE_PRECONFIGURED,
-            'state' => LTI_TOOL_STATE_CONFIGURED
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_PRECONFIGURED,
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED
         ]);
         $ltigenerator->create_tool_types([
             'name' => 'site tool preconfigured and activity chooser',
             'baseurl' => 'http://example.com/tool/3',
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
-            'state' => LTI_TOOL_STATE_CONFIGURED
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED
         ]);
         $ltigenerator->create_course_tool_types([
             'name' => 'course tool preconfigured and activity chooser',
@@ -106,8 +106,8 @@ final class types_helper_test extends mod_lti_testcase {
         $ltigenerator->create_tool_types([
             'name' => 'site tool preconfigured and activity chooser, restricted to category 2',
             'baseurl' => 'http://example.com/tool/5',
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
+            'coursevisible' => \core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
+            'state' => \core_ltix\constants::LTI_TOOL_STATE_CONFIGURED,
             'lti_coursecategories' => $coursecat2->id
         ]);
 
@@ -127,7 +127,7 @@ final class types_helper_test extends mod_lti_testcase {
 
         // Request for only those tools configured to show in the activity chooser for the teacher.
         $coursetooltypes = types_helper::get_lti_types_by_course($course->id, $teacher->id,
-            [LTI_COURSEVISIBLE_ACTIVITYCHOOSER]);
+            [\core_ltix\constants::LTI_COURSEVISIBLE_ACTIVITYCHOOSER]);
         $this->assertCount(2, $coursetooltypes);
         $expected = [
             'http://example.com/tool/3',
@@ -140,7 +140,7 @@ final class types_helper_test extends mod_lti_testcase {
 
         // Request for only those tools configured to show as a preconfigured tool for the teacher.
         $coursetooltypes = types_helper::get_lti_types_by_course($course->id, $teacher->id,
-            [LTI_COURSEVISIBLE_PRECONFIGURED]);
+            [\core_ltix\constants::LTI_COURSEVISIBLE_PRECONFIGURED]);
         $this->assertCount(1, $coursetooltypes);
         $expected = [
             'http://example.com/tool/2',
@@ -167,106 +167,6 @@ final class types_helper_test extends mod_lti_testcase {
             \core\context\course::instance($course->id));
         $coursetooltypes = types_helper::get_lti_types_by_course($course->id, $teacher->id);
         $this->assertCount(0, $coursetooltypes);
-    }
-
-    /**
-     * Test fetching tool types for a given course and user.
-     *
-     * @covers ::override_type_showinactivitychooser
-     * @return void.
-     */
-    public function test_override_type_showinactivitychooser(): void {
-        $this->resetAfterTest();
-
-        global $DB;
-        $coursecat1 = $this->getDataGenerator()->create_category();
-        $coursecat2 = $this->getDataGenerator()->create_category();
-        $course = $this->getDataGenerator()->create_course(['category' => $coursecat1->id]);
-        $course2 = $this->getDataGenerator()->create_course(['category' => $coursecat2->id]);
-        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
-        $teacher2 = $this->getDataGenerator()->create_and_enrol($course2, 'editingteacher');
-        $context =  \core\context\course::instance($course->id);
-
-        $this->setUser($teacher);
-
-        /*
-            Create the following tool types for testing:
-            | tooltype | coursevisible                     | restrictedtocategory |
-            | site     | LTI_COURSEVISIBLE_NO              |                      |
-            | site     | LTI_COURSEVISIBLE_PRECONFIGURED   |                      |
-            | site     | LTI_COURSEVISIBLE_ACTIVITYCHOOSER | yes                  |
-            | site     | LTI_COURSEVISIBLE_ACTIVITYCHOOSER | yes                  |
-            | course   | LTI_COURSEVISIBLE_ACTIVITYCHOOSER |                      |
-        */
-
-        /** @var \mod_lti_generator $ltigenerator */
-        $ltigenerator = $this->getDataGenerator()->get_plugin_generator('mod_lti');
-        $tool1id = $ltigenerator->create_tool_types([
-            'name' => 'site tool do not show',
-            'baseurl' => 'http://example.com/tool/1',
-            'coursevisible' => LTI_COURSEVISIBLE_NO,
-            'state' => LTI_TOOL_STATE_CONFIGURED
-        ]);
-        $tool2id = $ltigenerator->create_tool_types([
-            'name' => 'site tool preconfigured only',
-            'baseurl' => 'http://example.com/tool/2',
-            'coursevisible' => LTI_COURSEVISIBLE_PRECONFIGURED,
-            'state' => LTI_TOOL_STATE_CONFIGURED
-        ]);
-        $tool3id = $ltigenerator->create_course_tool_types([
-            'name' => 'course tool preconfigured and activity chooser',
-            'baseurl' => 'http://example.com/tool/3',
-            'course' => $course->id
-        ]);
-        $tool4id = $ltigenerator->create_tool_types([
-            'name' => 'site tool preconfigured and activity chooser, restricted to category 2',
-            'baseurl' => 'http://example.com/tool/4',
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'lti_coursecategories' => $coursecat2->id
-        ]);
-        $tool5id = $ltigenerator->create_tool_types([
-            'name' => 'site tool preconfigured and activity chooser, restricted to category 1',
-            'baseurl' => 'http://example.com/tool/5',
-            'coursevisible' => LTI_COURSEVISIBLE_ACTIVITYCHOOSER,
-            'state' => LTI_TOOL_STATE_CONFIGURED,
-            'lti_coursecategories' => $coursecat1->id
-        ]);
-
-        // LTI_COURSEVISIBLE_NO can't be updated.
-        $result = types_helper::override_type_showinactivitychooser($tool1id, $course->id, $context, true);
-        $this->assertFalse($result);
-
-        // Tool not exist.
-        $result = types_helper::override_type_showinactivitychooser($tool5id + 1, $course->id, $context, false);
-        $this->assertFalse($result);
-
-        $result = types_helper::override_type_showinactivitychooser($tool2id, $course->id, $context, true);
-        $this->assertTrue($result);
-        $coursevisibleoverriden = $DB->get_field('lti_coursevisible', 'coursevisible',
-            ['typeid' => $tool2id, 'courseid' => $course->id]);
-        $this->assertEquals(LTI_COURSEVISIBLE_ACTIVITYCHOOSER, $coursevisibleoverriden);
-
-        $result = types_helper::override_type_showinactivitychooser($tool3id, $course->id, $context, false);
-        $this->assertTrue($result);
-        $coursevisible = $DB->get_field('lti_types', 'coursevisible', ['id' => $tool3id]);
-        $this->assertEquals(LTI_COURSEVISIBLE_PRECONFIGURED, $coursevisible);
-
-        // Restricted category no allowed.
-        $this->expectException('moodle_exception');
-        $this->expectExceptionMessage('You are not allowed to change this setting for this tool.');
-        types_helper::override_type_showinactivitychooser($tool4id, $course->id, $context, false);
-
-        // Restricted category allowed.
-        $result = types_helper::override_type_showinactivitychooser($tool5id, $course->id, $context, false);
-        $this->assertTrue($result);
-        $coursevisibleoverriden = $DB->get_field('lti_coursevisible', 'coursevisible',
-            ['typeid' => $tool5id, 'courseid' => $course->id]);
-        $this->assertEquals(LTI_COURSEVISIBLE_PRECONFIGURED, $coursevisibleoverriden);
-
-        $this->setUser($teacher2);
-        $this->expectException(\required_capability_exception::class);
-        types_helper::override_type_showinactivitychooser($tool5id, $course->id, $context, false);
     }
 
 }

@@ -109,9 +109,9 @@ class mod_lti_mod_form extends moodleform_mod {
         // Since 'mod/lti:addmanualinstance' capability is deprecated, determining which users may have had access to the certain
         // form fields (the manual config fields) isn't straightforward. Users without 'mod/lti:addmanualinstance' would have only
         // been permitted to edit the basic instance fields (name, etc.), so care must be taken not to display the config fields to
-        // these users. Users who can add/edit course tools (mod/lti:addcoursetool) are able to view tool information anyway, via
+        // these users. Users who can add/edit course tools (moodle/ltix:addcoursetool) are able to view tool information anyway, via
         // the tool definitions, so this capability is used as a replacement, to control access to these tool config fields.
-        $canviewmanualconfig = has_capability('mod/lti:addcoursetool', $this->context);
+        $canviewmanualconfig = has_capability('moodle/ltix:addcoursetool', $this->context);
         $showtypes = has_capability('mod/lti:addpreconfiguredinstance', $this->context);
 
         if ($manualinstance && !$canviewmanualconfig) {
@@ -222,43 +222,43 @@ class mod_lti_mod_form extends moodleform_mod {
         $mform->setType('lineitemsubreviewparams', PARAM_TEXT);
 
         $launchoptions = [
-            LTI_LAUNCH_CONTAINER_DEFAULT => get_string('default', 'lti'),
-            LTI_LAUNCH_CONTAINER_EMBED => get_string('embed', 'lti'),
-            LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS => get_string('embed_no_blocks', 'lti'),
-            LTI_LAUNCH_CONTAINER_REPLACE_MOODLE_WINDOW => get_string('existing_window', 'lti'),
-            LTI_LAUNCH_CONTAINER_WINDOW => get_string('new_window', 'lti')
+            \core_ltix\constants::LTI_LAUNCH_CONTAINER_DEFAULT => get_string('default', 'lti'),
+            \core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED => get_string('embed', 'core_ltix'),
+            \core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS => get_string('embed_no_blocks', 'core_ltix'),
+            \core_ltix\constants::LTI_LAUNCH_CONTAINER_REPLACE_MOODLE_WINDOW => get_string('existing_window', 'core_ltix'),
+            \core_ltix\constants::LTI_LAUNCH_CONTAINER_WINDOW => get_string('new_window', 'core_ltix')
         ];
         $mform->addElement('select', 'launchcontainer', get_string('launchinpopup', 'lti'), $launchoptions);
         $mform->addHelpButton('launchcontainer', 'launchinpopup', 'lti');
         $mform->setAdvanced('launchcontainer');
 
         if ($canviewmanualconfig) {
-            $mform->addElement('text', 'resourcekey', get_string('resourcekey', 'lti'));
+            $mform->addElement('text', 'resourcekey', get_string('resourcekey', 'core_ltix'));
             $mform->setType('resourcekey', PARAM_TEXT);
             $mform->setAdvanced('resourcekey');
-            $mform->addHelpButton('resourcekey', 'resourcekey', 'lti');
+            $mform->addHelpButton('resourcekey', 'resourcekey', 'core_ltix');
             $mform->setForceLtr('resourcekey');
 
-            $mform->addElement('passwordunmask', 'password', get_string('password', 'lti'));
+            $mform->addElement('passwordunmask', 'password', get_string('password', 'core_ltix'));
             $mform->setType('password', PARAM_TEXT);
             $mform->setAdvanced('password');
-            $mform->addHelpButton('password', 'password', 'lti');
+            $mform->addHelpButton('password', 'password', 'core_ltix');
 
-            $mform->addElement('textarea', 'instructorcustomparameters', get_string('custom', 'lti'), ['rows' => 4, 'cols' => 60]);
+            $mform->addElement('textarea', 'instructorcustomparameters', get_string('custom', 'core_ltix'), ['rows' => 4, 'cols' => 60]);
             $mform->setType('instructorcustomparameters', PARAM_TEXT);
             $mform->setAdvanced('instructorcustomparameters');
-            $mform->addHelpButton('instructorcustomparameters', 'custom', 'lti');
+            $mform->addHelpButton('instructorcustomparameters', 'custom', 'core_ltix');
             $mform->setForceLtr('instructorcustomparameters');
 
-            $mform->addElement('text', 'icon', get_string('icon_url', 'lti'), ['size' => '64']);
+            $mform->addElement('text', 'icon', get_string('icon_url', 'core_ltix'), ['size' => '64']);
             $mform->setType('icon', PARAM_URL);
             $mform->setAdvanced('icon');
-            $mform->addHelpButton('icon', 'icon_url', 'lti');
+            $mform->addHelpButton('icon', 'icon_url', 'core_ltix');
 
-            $mform->addElement('text', 'secureicon', get_string('secure_icon_url', 'lti'), ['size' => '64']);
+            $mform->addElement('text', 'secureicon', get_string('secure_icon_url', 'core_ltix'), ['size' => '64']);
             $mform->setType('secureicon', PARAM_URL);
             $mform->setAdvanced('secureicon');
-            $mform->addHelpButton('secureicon', 'secure_icon_url', 'lti');
+            $mform->addHelpButton('secureicon', 'secure_icon_url', 'core_ltix');
         } else {
             // Need to submit these still, but hidden to avoid instructor modification.
             $mform->addElement('hidden', 'resourcekey', '', ['id' => 'id_resourcekey']);
@@ -274,7 +274,7 @@ class mod_lti_mod_form extends moodleform_mod {
         }
 
         // Add privacy preferences fieldset where users choose whether to send their data.
-        $mform->addElement('header', 'privacy', get_string('privacy', 'lti'));
+        $mform->addElement('header', 'privacy', get_string('privacy', 'core_ltix'));
 
         $mform->addElement('advcheckbox', 'instructorchoicesendname', get_string('share_name', 'lti'));
         $mform->addHelpButton('instructorchoicesendname', 'share_name', 'lti');
@@ -324,7 +324,7 @@ class mod_lti_mod_form extends moodleform_mod {
         $instancetypes = lti_get_types_for_add_instance();
         $matchestoolnotavailabletocourse = false;
         if (!$manualinstance && !empty($this->current->toolurl)) {
-            if (lti_get_type_config($this->current->typeid)) {
+            if (\core_ltix\helper::get_type_config($this->current->typeid)) {
                 $matchestoolnotavailabletocourse = !in_array($this->current->typeid, array_keys($instancetypes));
             }
         }
@@ -340,7 +340,7 @@ class mod_lti_mod_form extends moodleform_mod {
         }
 
         $tooltypeid = $this->current->typeid ?? $this->typeid;
-        $tooltype = lti_get_type($tooltypeid);
+        $tooltype = \core_ltix\helper::get_type($tooltypeid);
 
         // Store the id of the tool type should it be linked to a tool proxy, to aid in disabling certain form elements.
         $toolproxytypeid = $tooltype->toolproxyid ? $tooltypeid : '';
@@ -354,7 +354,7 @@ class mod_lti_mod_form extends moodleform_mod {
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         // For tools supporting content selection, add the 'Select content button'.
-        $config = lti_get_type_config($tooltypeid);
+        $config = \core_ltix\helper::get_type_config($tooltypeid);
         $supportscontentitemselection = !empty($config['contentitem']);
 
         if ($supportscontentitemselection) {
@@ -369,8 +369,8 @@ class mod_lti_mod_form extends moodleform_mod {
                 || !empty($this->current->secureicon) || !empty($this->current->icon));
 
             $selectcontentindicatorinner = $iscontentitem ?
-                $OUTPUT->pix_icon('i/valid', get_string('contentselected', 'mod_lti'), 'moodle', ['class' => 'me-1'])
-                . get_string('contentselected', 'mod_lti') : '';
+                $OUTPUT->pix_icon('i/valid', get_string('contentselected', 'core_ltix'), 'moodle', ['class' => 'me-1'])
+                . get_string('contentselected', 'core_ltix') : '';
             $selectcontentindicator = html_writer::div($selectcontentindicatorinner, '',
                 ['aria-role' => 'status', 'id' => 'id_selectcontentindicator']);
             $selectcontentgrp = [
@@ -388,7 +388,7 @@ class mod_lti_mod_form extends moodleform_mod {
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'server');
 
         // Show activity name when launched only applies to embedded type launches.
-        if (in_array($config['launchcontainer'], [LTI_LAUNCH_CONTAINER_EMBED, LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS])) {
+        if (in_array($config['launchcontainer'], [\core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED, \core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS])) {
             $mform->addElement('checkbox', 'showtitlelaunch', get_string('display_name', 'lti'));
             $mform->setDefault('showtitlelaunch', true);
             $mform->addHelpButton('showtitlelaunch', 'display_name', 'lti');
@@ -411,7 +411,7 @@ class mod_lti_mod_form extends moodleform_mod {
         }
 
         // Show activity description when launched only applies to embedded type launches.
-        if (in_array($config['launchcontainer'], [LTI_LAUNCH_CONTAINER_EMBED, LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS])) {
+        if (in_array($config['launchcontainer'], [\core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED, \core_ltix\constants::LTI_LAUNCH_CONTAINER_EMBED_NO_BLOCKS])) {
             $mform->addElement('checkbox', 'showdescriptionlaunch', get_string('display_description', 'lti'));
             $mform->addHelpButton('showdescriptionlaunch', 'display_description', 'lti');
         } else {
@@ -451,7 +451,7 @@ class mod_lti_mod_form extends moodleform_mod {
 
         // Launch container is set to 'LTI_LAUNCH_CONTAINER_DEFAULT', meaning it'll delegate to the tool's configuration.
         // Existing instances using values other than this can continue to use their existing value but cannot change it.
-        $mform->addElement('hidden', 'launchcontainer', LTI_LAUNCH_CONTAINER_DEFAULT);
+        $mform->addElement('hidden', 'launchcontainer', \core_ltix\constants::LTI_LAUNCH_CONTAINER_DEFAULT);
         $mform->setType('launchcontainer', PARAM_INT);
 
         // Included to support deep linking return, but hidden to avoid instructor modification.
@@ -459,11 +459,11 @@ class mod_lti_mod_form extends moodleform_mod {
         $mform->setType('resourcekey', PARAM_TEXT);
         $mform->addElement('hidden', 'password', '', ['id' => 'id_password']);
         $mform->setType('password', PARAM_TEXT);
-        $mform->addElement('textarea', 'instructorcustomparameters', get_string('custom', 'lti'),
+        $mform->addElement('textarea', 'instructorcustomparameters', get_string('custom', 'core_ltix'),
             ['rows' => 4, 'cols' => 60]);
         $mform->setType('instructorcustomparameters', PARAM_TEXT);
         $mform->setAdvanced('instructorcustomparameters');
-        $mform->addHelpButton('instructorcustomparameters', 'custom', 'lti');
+        $mform->addHelpButton('instructorcustomparameters', 'custom', 'core_ltix');
         $mform->setForceLtr('instructorcustomparameters');
         $mform->addElement('hidden', 'icon', '', ['id' => 'id_icon']);
         $mform->setType('icon', PARAM_URL);
@@ -471,7 +471,7 @@ class mod_lti_mod_form extends moodleform_mod {
         $mform->setType('secureicon', PARAM_URL);
 
         // Add standard course module grading elements, and show them if the tool type + instance config permits it.
-        if (!empty($config['acceptgrades']) && in_array($config['acceptgrades'], [LTI_SETTING_ALWAYS, LTI_SETTING_DELEGATE])) {
+        if (!empty($config['acceptgrades']) && in_array($config['acceptgrades'], [\core_ltix\constants::LTI_SETTING_ALWAYS, \core_ltix\constants::LTI_SETTING_DELEGATE])) {
             $elementnamesbeforegrading = $this->_form->_elementIndex;
             $this->standard_grading_coursemodule_elements();
             $elementnamesaftergrading = $this->_form->_elementIndex;
@@ -494,7 +494,7 @@ class mod_lti_mod_form extends moodleform_mod {
             // permits overrides to 'no/unchecked'.
             // - Course tools with 'acceptgrades' set to 'DELEGATE' result in a checkbox that is defaulted to unchecked but which
             // permits overrides to 'yes/checked'.
-            if (($issitetooltype && $config['acceptgrades'] == LTI_SETTING_DELEGATE) || !$issitetooltype) {
+            if (($issitetooltype && $config['acceptgrades'] == \core_ltix\constants::LTI_SETTING_DELEGATE) || !$issitetooltype) {
                 $mform->insertElementBefore(
                     $mform->createElement(
                         'advcheckbox',
@@ -503,7 +503,7 @@ class mod_lti_mod_form extends moodleform_mod {
                     ),
                     array_keys($diff)[0]
                 );
-                $acceptgradesdefault = !$issitetooltype && $config['acceptgrades'] == LTI_SETTING_ALWAYS ? '1' : '0';
+                $acceptgradesdefault = !$issitetooltype && $config['acceptgrades'] == \core_ltix\constants::LTI_SETTING_ALWAYS ? '1' : '0';
                 $mform->setDefault('instructorchoiceacceptgrades', $acceptgradesdefault);
                 $mform->disabledIf('instructorchoiceacceptgrades', 'typeid', 'in', [$toolproxytypeid]); // LTI 2 only.
             }
@@ -517,7 +517,8 @@ class mod_lti_mod_form extends moodleform_mod {
         $this->add_action_buttons();
 
         if ($supportscontentitemselection) {
-            $PAGE->requires->js_call_amd('mod_lti/mod_form', 'init', [$COURSE->id]);
+            $PAGE->requires->js_call_amd('mod_lti/activity_contentitem_selection', 'init',
+                [$tooltypeid, $this->context->id, 'mod_lti:activityplacement']);
         }
     }
 
@@ -527,7 +528,7 @@ class mod_lti_mod_form extends moodleform_mod {
      * @param object $defaultvalues default values to populate the form with.
      */
     public function set_data($defaultvalues) {
-        $services = lti_get_services();
+        $services = \core_ltix\helper::get_services();
         if (is_object($defaultvalues)) {
             foreach ($services as $service) {
                 $service->set_instance_form_values( $defaultvalues );
