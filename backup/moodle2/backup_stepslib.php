@@ -3200,6 +3200,21 @@ class backup_ltixtypes_structure_step extends backup_structure_step {
             'coursevisible',
         ]);
 
+        $ltiplacements = new backup_nested_element('ltiplacements');
+        $ltiplacement = new backup_nested_element('ltiplacement', ['id'], [
+            'placementtype',
+            'placementcomponent',
+        ]);
+        $ltiplacementconfigs = new backup_nested_element('ltiplacementconfigs');
+        $ltiplacementconfig = new backup_nested_element('ltiplacementconfig', ['id'], [
+            'name',
+            'value',
+        ]);
+        $ltiplacementstatus = new backup_nested_element('ltiplacementstatus', ['id'], [
+            'contextid',
+            'status',
+        ]);
+
         // Build the tree.
         $ltitypes->add_child($ltitype);
         $ltitype->add_child($ltitypesconfigs);
@@ -3209,6 +3224,11 @@ class backup_ltixtypes_structure_step extends backup_structure_step {
         $ltitoolproxy->add_child($ltitoolsettings);
         $ltitoolsettings->add_child($ltitoolsetting);
         $ltitype->add_child($lticoursevisible);
+        $ltitype->add_child($ltiplacements);
+        $ltiplacements->add_child($ltiplacement);
+        $ltiplacement->add_child($ltiplacementconfigs);
+        $ltiplacementconfigs->add_child($ltiplacementconfig);
+        $ltiplacement->add_child($ltiplacementstatus);
 
         // Define sources.
         $ltitypearray = $this->retrieve_lti_types();
@@ -3238,6 +3258,16 @@ class backup_ltixtypes_structure_step extends backup_structure_step {
                     AND (ltc.name = :password OR ltc.name = :resourcekey)",
             $params
         );
+
+        $ltiplacement->set_source_sql(
+            "SELECT lp.id, lpt.type AS placementtype, lpt.component AS placementcomponent
+               FROM {lti_placement} lp
+               JOIN {lti_placement_types} lpt ON lpt.id = lp.placementtypeid
+              WHERE lp.toolid = ?",
+            [backup::VAR_PARENTID]
+        );
+        $ltiplacementconfig->set_source_table('lti_placement_config', ['placementid' => backup::VAR_PARENTID]);
+        $ltiplacementstatus->set_source_table('lti_placement_status', ['placementid' => backup::VAR_PARENTID]);
 
         // If this is LTI 2 tool add settings for the current activity.
         $ltitoolproxy->set_source_sql(

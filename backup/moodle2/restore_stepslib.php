@@ -6842,6 +6842,15 @@ class restore_ltixtypes_structure_step extends restore_structure_step {
         $paths[] = new restore_path_element('ltitoolproxy', '/ltitypes/ltitype/ltitoolproxy');
         $paths[] = new restore_path_element('ltitoolsetting', '/ltitypes/ltitype/ltitoolproxy/ltitoolsettings/ltitoolsetting');
         $paths[] = new restore_path_element('lticoursevisible', '/ltitypes/ltitype/lticoursevisible');
+        $paths[] = new restore_path_element('ltiplacement', '/ltitypes/ltitype/ltiplacements/ltiplacement');
+        $paths[] = new restore_path_element(
+            'ltiplacementconfig',
+            '/ltitypes/ltitype/ltiplacements/ltiplacement/ltiplacementconfigs/ltiplacementconfig'
+        );
+        $paths[] = new restore_path_element(
+            'ltiplacementstatus',
+            '/ltitypes/ltitype/ltiplacements/ltiplacement/ltiplacementstatus'
+        );
 
         // Add support for ltix plugin structures.
         $this->add_plugin_structure('ltixsource', $ltitype);
@@ -6965,6 +6974,60 @@ class restore_ltixtypes_structure_step extends restore_structure_step {
 
         if ($data->typeid) {
             $DB->insert_record('lti_coursevisible', $data);
+        }
+    }
+
+    /**
+     * Processes an LTI ltiplacement restore
+     *
+     * @param array $data The data from the backup XML file
+     */
+    protected function process_ltiplacement(array $data): void {
+        global $DB;
+
+        $data = (object) $data;
+        $oldid = $data->id;
+
+        // TODO: Make a decision on how to handle unavailable placement types.
+        $data->placementtypeid = $DB->get_field('lti_placement_types', 'id', [
+            'type' => $data->placementtype,
+            'component' => $data->placementcomponent,
+        ]);
+        if ($data->placementtypeid) {
+            $ltiplacementid = $DB->insert_record('lti_placements', $data);
+            $this->set_mapping('ltiplacement', $oldid, $ltiplacementid);
+        }
+    }
+
+    /**
+     * Processes an LTI ltiplacementconfig restore
+     *
+     * @param array $data The data from the backup XML file
+     */
+    protected function process_ltiplacementconfig(array $data): void {
+        global $DB;
+
+        $data = (object) $data;
+        $data->placementid = $this->get_new_parentid('ltiplacement');
+
+        if ($data->placementid) {
+            $DB->insert_record('lti_placement_config', $data);
+        }
+    }
+
+    /**
+     * Processes an LTI ltiplacementstatus restore
+     *
+     * @param array $data The data from the backup XML file
+     */
+    protected function process_ltiplacementstatus(array $data): void {
+        global $DB;
+
+        $data = (object) $data;
+        $data->placementid = $this->get_new_parentid('ltiplacement');
+
+        if ($data->placementid) {
+            $DB->insert_record('lti_placement_status', $data);
         }
     }
 }
