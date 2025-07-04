@@ -48,14 +48,7 @@ class provider implements
 
     \core_privacy\local\request\shared_userlist_provider
 {
-
-
-    /**
-     * Returns information about the user data stored in this component.
-     *
-     * @param collection $collection A list of information about this component
-     * @return collection The collection object filled out with information about this component.
-     */
+    #[\Override]
     public static function get_metadata(collection $collection): collection {
         $collection->add_external_location_link(
             'lti_provider',
@@ -111,13 +104,8 @@ class provider implements
         return $collection;
     }
 
-    /**
-     * Gets all of the users in a specified context.
-     *
-     * @param userlist $userlist List of users and context to check.
-     * @return void
-     */
-    public static function get_users_in_context(userlist $userlist): void {
+    #[\Override]
+    public static function get_users_in_context(userlist $userlist) {
         $context = $userlist->get_context();
 
         // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
@@ -153,12 +141,7 @@ class provider implements
         }
     }
 
-    /**
-     * Get the list of contexts that contain user information for the specified user.
-     *
-     * @param   int $userid The user to search.
-     * @return  contextlist $contextlist The contextlist containing the list of contexts used in this plugin.
-     */
+    #[\Override]
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
 
@@ -173,15 +156,12 @@ class provider implements
         // Fetch all LTI types.
         $sql = "SELECT c.id
                  FROM {context} c
-                 JOIN {course} course
-                   ON c.contextlevel = :contextlevel
-                  AND c.instanceid = course.id
-                 JOIN {lti_types} ltit
-                   ON ltit.course = course.id
+                 JOIN {course} course ON c.contextlevel = :contextlevel AND c.instanceid = course.id
+                 JOIN {lti_types} ltit ON ltit.course = course.id
                 WHERE ltit.createdby = :userid";
         $params = [
             'contextlevel' => CONTEXT_COURSE,
-            'userid' => $userid
+            'userid' => $userid,
         ];
         $contextlist->add_from_sql($sql, $params);
 
@@ -190,13 +170,8 @@ class provider implements
         return $contextlist;
     }
 
-    /**
-     * Extracts and exports all of the user data for the provided contexts.
-     *
-     * @param approved_contextlist $contextlist The list of contexts.
-     * @return void
-     */
-    public static function export_user_data(approved_contextlist $contextlist): void {
+    #[\Override]
+    public static function export_user_data(approved_contextlist $contextlist) {
         self::export_user_data_lti_submissions($contextlist);
         self::export_user_data_lti_types($contextlist);
         self::export_user_data_lti_tool_proxies($contextlist);
@@ -212,7 +187,7 @@ class provider implements
         global $DB;
 
         // Filter out any contexts that are not related to courses.
-        $courseids = array_reduce($contextlist->get_contexts(), function($carry, $context) {
+        $courseids = array_reduce($contextlist->get_contexts(), function ($carry, $context) {
             if ($context->contextlevel == CONTEXT_COURSE) {
                 $carry[] = $context->instanceid;
             }
@@ -225,20 +200,20 @@ class provider implements
 
         $user = $contextlist->get_user();
 
-        list($insql, $inparams) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
         $params = array_merge($inparams, ['userid' => $user->id]);
         $ltitypes = $DB->get_recordset_select('lti_types', "course $insql AND createdby = :userid", $params, 'timecreated ASC');
-        self::recordset_loop_and_export($ltitypes, 'course', [], function($carry, $record) {
+        self::recordset_loop_and_export($ltitypes, 'course', [], function ($carry, $record) {
             $context = \context_course::instance($record->course);
             $options = ['context' => $context];
             $carry[] = [
                 'name' => format_string($record->name, true, $options),
                 'createdby' => transform::user($record->createdby),
                 'timecreated' => transform::datetime($record->timecreated),
-                'timemodified' => transform::datetime($record->timemodified)
+                'timemodified' => transform::datetime($record->timemodified),
             ];
             return $carry;
-        }, function($courseid, $data) {
+        }, function ($courseid, $data) {
             $context = \context_course::instance($courseid);
             $finaldata = (object) ['lti_types' => $data];
             writer::with_context($context)->export_data([], $finaldata);
@@ -255,7 +230,7 @@ class provider implements
         global $DB;
 
         // Filter out any contexts that are not related to system context.
-        $systemcontexts = array_filter($contextlist->get_contexts(), function($context) {
+        $systemcontexts = array_filter($contextlist->get_contexts(), function ($context) {
             return $context->contextlevel == CONTEXT_SYSTEM;
         });
 
@@ -274,7 +249,7 @@ class provider implements
                 'name' => format_string($ltiproxy->name, true, ['context' => $systemcontext]),
                 'createdby' => transform::user($ltiproxy->createdby),
                 'timecreated' => transform::datetime($ltiproxy->timecreated),
-                'timemodified' => transform::datetime($ltiproxy->timemodified)
+                'timemodified' => transform::datetime($ltiproxy->timemodified),
             ];
         }
         $ltiproxies->close();
@@ -289,7 +264,7 @@ class provider implements
      * @param approved_contextlist $contextlist a list of contexts approved for export.
      * @return void
      */
-    public static function export_user_data_lti_submissions(approved_contextlist $contextlist): void {
+    protected static function export_user_data_lti_submissions(approved_contextlist $contextlist): void {
         global $DB;
 
         $contextids = array_column($contextlist->get_contexts(), 'id');
@@ -316,30 +291,31 @@ class provider implements
             array_merge($inparams, ['userid' => $user->id]),
             'dateupdated, ltiid'
         );
-        \core_ltix\privacy\provider::recordset_loop_and_export($recordset, 'ltiid', [], function($carry, $record) {
-            $carry[] = [
-                'gradepercent' => $record->gradepercent,
-                'originalgrade' => $record->originalgrade,
-                'datesubmitted' => transform::datetime($record->datesubmitted),
-                'dateupdated' => transform::datetime($record->dateupdated)
-            ];
-            return $carry;
-        }, function($ltiid, $data) use ($user, $linkidstocontextids) {
-            $context = \context::instance_by_id($linkidstocontextids[$ltiid]);
-            $contextdata = helper::get_context_data($context, $user);
-            $finaldata = (object) array_merge((array) $contextdata, ['submissions' => $data]);
-            helper::export_context_files($context, $user);
-            writer::with_context($context)->export_data([], $finaldata);
-        });
+        self::recordset_loop_and_export(
+            $recordset,
+            'ltiid',
+            [],
+            function ($carry, $record) {
+                $carry[] = [
+                    'gradepercent' => $record->gradepercent,
+                    'originalgrade' => $record->originalgrade,
+                    'datesubmitted' => transform::datetime($record->datesubmitted),
+                    'dateupdated' => transform::datetime($record->dateupdated),
+                ];
+                return $carry;
+            },
+            function ($ltiid, $data) use ($user, $linkidstocontextids) {
+                $context = \context::instance_by_id($linkidstocontextids[$ltiid]);
+                $contextdata = helper::get_context_data($context, $user);
+                $finaldata = (object) array_merge((array) $contextdata, ['submissions' => $data]);
+                helper::export_context_files($context, $user);
+                writer::with_context($context)->export_data([], $finaldata);
+            }
+        );
     }
 
-    /**
-     * Deletes LTI data for all users in a given context.
-     *
-     * @param \context $context The context to delete all data for.
-     * @return void
-     */
-    public static function delete_data_for_all_users_in_context(\context $context): void {
+    #[\Override]
+    public static function delete_data_for_all_users_in_context(\context $context) {
         global $DB;
 
         // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
@@ -359,16 +335,10 @@ class provider implements
         }
     }
 
-    /**
-     * Deletes LTI data for a given user in all provided contexts.
-     * This function just updates the User ID to 0 instead of deleting the LTI instances
-     * because the instances may be used by other people.
-     *
-     * @param approved_contextlist $contextlist List of contexts to delete the user from.
-     * @return void
-     */
-    public static function delete_data_for_user(approved_contextlist $contextlist): void {
+    #[\Override]
+    public static function delete_data_for_user(approved_contextlist $contextlist) {
         global $DB;
+
         if (!$contextlist->count()) {
             return;
         }
@@ -393,15 +363,8 @@ class provider implements
         }
     }
 
-    /**
-     * Deletes LTI data for a given list of users and their contexts.
-     * This function just updates the User ID to 0 instead of the deleting the LTI instances
-     * because the instances may be used by other people.
-     *
-     * @param approved_userlist $userlist The list of contexts and users to delete the user from.
-     * @return void
-     */
-    public static function delete_data_for_users(approved_userlist $userlist): void {
+    #[\Override]
+    public static function delete_data_for_users(approved_userlist $userlist) {
         global $DB;
 
         $context = $userlist->get_context();
@@ -451,7 +414,7 @@ class provider implements
         $initial,
         callable $reducer,
         callable $export
-    ) {
+    ): void {
         $data = $initial;
         $lastid = null;
 
