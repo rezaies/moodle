@@ -120,6 +120,14 @@ class provider implements
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
 
+        // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+        $sql = "SELECT s.userid
+                  FROM {lti_submission} s
+                  JOIN {lti_resource_link} rl ON rl.id = s.ltiid
+                 WHERE rl.contextid = :contextid";
+        $params = ['contextid' => $context->id];
+        $userlist->add_from_sql('userid', $sql, $params);
+
         if ($context->contextlevel == CONTEXT_SYSTEM) {
             // Fetch all LTI tool proxies.
             $sql = "SELECT ltp.createdby AS userid
@@ -146,31 +154,6 @@ class provider implements
     }
 
     /**
-     * Gets a list of users in the LTI submission and instance tables
-     * using the requested parameters.
-     *
-     * @param userlist $userlist List of users and context to check.
-     * @param string $alias Alias of the submission table.
-     * @param string $insql SQL list of item IDs.
-     * @param array $params SQL parameters
-     * @return void
-     */
-    public static function get_users_in_context_from_sql(
-        userlist $userlist,
-        string $alias,
-        string $insql,
-        array $params
-    ): void {
-        // TODO: Add handling for LTI instance table.
-
-        $sql = "SELECT {$alias}.userid
-                FROM {lti_submission} {$alias}
-                WHERE {$alias}.ltiid IN ({$insql})";
-
-        $userlist->add_from_sql('userid', $sql, $params);
-    }
-
-    /**
      * Get the list of contexts that contain user information for the specified user.
      *
      * @param   int $userid The user to search.
@@ -178,6 +161,14 @@ class provider implements
      */
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
+
+        // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+        $sql = "SELECT rl.contextid
+                  FROM {lti_submission} s
+                  JOIN {lti_resource_link} rl ON rl.id = s.ltiid
+                 WHERE s.userid = :userid";
+        $params = ['userid' => $userid];
+        $contextlist->add_from_sql($sql, $params);
 
         // Fetch all LTI types.
         $sql = "SELECT c.id
@@ -200,33 +191,13 @@ class provider implements
     }
 
     /**
-     * Get SQL to retrieve all LTI instances/submissions where the user has been involved.
-     *
-     * @param int $userid The user to search
-     * @return array join/where/params SQL parts to include in queries
-     */
-    public static function get_join_sql(int $userid): array {
-        // TODO: Add handling for LTI instance table.
-
-        $join = "INNER JOIN {lti_submission} ltisub
-                ON ltisub.ltiid = lti.id ";
-
-        $where = "WHERE ltisub.userid = :userid";
-
-        return [
-            'join' => $join,
-            'where' => $where,
-            'params' => ['userid' => $userid],
-        ];
-    }
-
-    /**
      * Extracts and exports all of the user data for the provided contexts.
      *
      * @param approved_contextlist $contextlist The list of contexts.
      * @return void
      */
     public static function export_user_data(approved_contextlist $contextlist): void {
+        self::export_user_data_lti_submissions($contextlist);
         self::export_user_data_lti_types($contextlist);
         self::export_user_data_lti_tool_proxies($contextlist);
     }
@@ -314,7 +285,6 @@ class provider implements
 
     /**
      * Export personal data for the given approved_contextlist related to LTI submissions.
-     * TODO: This is tightly coupled to mod_lti. It needs to be rewritten and will need to include the instance table too.
      *
      * @param approved_contextlist $contextlist a list of contexts approved for export.
      * @return void
@@ -322,28 +292,31 @@ class provider implements
     public static function export_user_data_lti_submissions(approved_contextlist $contextlist): void {
         global $DB;
 
-        // Filter out any contexts that are not related to modules.
-        $cmids = array_reduce($contextlist->get_contexts(), function($carry, $context) {
-            if ($context->contextlevel == CONTEXT_MODULE) {
-                $carry[] = $context->instanceid;
-            }
-            return $carry;
-        }, []);
-
-        if (empty($cmids)) {
+        $contextids = array_column($contextlist->get_contexts(), 'id');
+        if (empty($contextids)) {
             return;
         }
 
         $user = $contextlist->get_user();
 
-        // Get all the LTI activities associated with the above course modules.
-        $ltiidstocmids = self::get_lti_ids_to_cmids_from_cmids($cmids);
-        $ltiids = array_keys($ltiidstocmids);
-
-        list($insql, $inparams) = $DB->get_in_or_equal($ltiids, SQL_PARAMS_NAMED);
-        $params = array_merge($inparams, ['userid' => $user->id]);
-        $recordset = $DB->get_recordset_select('lti_submission', "ltiid $insql AND userid = :userid", $params, 'dateupdated, id');
-        \core_ltix\privacy\provider::recordset_loop_and_export($recordset, 'ltiid', [], function($carry, $record) use ($user, $ltiidstocmids) {
+        // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+        [$insql, $inparams] = $DB->get_in_or_equal($contextids, SQL_PARAMS_NAMED);
+        // Get all the LTI resource kinks associated with the above contexts.
+        $linkidstocontextids = $DB->get_records_sql_menu(
+            "SELECT rl.id, rl.contextid
+               FROM {lti_resource_link} rl
+              WHERE rl.contextid $insql",
+            $inparams
+        );
+        $recordset = $DB->get_recordset_sql(
+            "SELECT s.ltiid, s.datesubmitted, s.dateupdated, s.gradepercent, s.originalgrade, rl.contextid
+               FROM {lti_submission} s
+               JOIN {lti_resource_link} rl ON rl.id = s.ltiid
+              WHERE rl.contextid $insql AND s.userid = :userid",
+            array_merge($inparams, ['userid' => $user->id]),
+            'dateupdated, ltiid'
+        );
+        \core_ltix\privacy\provider::recordset_loop_and_export($recordset, 'ltiid', [], function($carry, $record) {
             $carry[] = [
                 'gradepercent' => $record->gradepercent,
                 'originalgrade' => $record->originalgrade,
@@ -351,8 +324,8 @@ class provider implements
                 'dateupdated' => transform::datetime($record->dateupdated)
             ];
             return $carry;
-        }, function($ltiid, $data) use ($user, $ltiidstocmids) {
-            $context = \context_module::instance($ltiidstocmids[$ltiid]);
+        }, function($ltiid, $data) use ($user, $linkidstocontextids) {
+            $context = \context::instance_by_id($linkidstocontextids[$ltiid]);
             $contextdata = helper::get_context_data($context, $user);
             $finaldata = (object) array_merge((array) $contextdata, ['submissions' => $data]);
             helper::export_context_files($context, $user);
@@ -369,10 +342,20 @@ class provider implements
     public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
 
+        // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+        $DB->delete_records_subquery(
+            'lti_submission',
+            'ltiid',
+            'id',
+            'SELECT id FROM {lti_resource_link} WHERE contextid = :contextid',
+            ['contextid' => $context->id]
+        );
+
         if ($context->contextlevel == CONTEXT_SYSTEM) {
             $DB->delete_records('lti_tool_proxies');
+            $DB->delete_records('lti_types', ['course' => SITEID]);
         } else if ($context->contextlevel == CONTEXT_COURSE) {
-            $DB->delete_records('lti_types');
+            $DB->delete_records('lti_types', ['course' => $context->instanceid]);
         }
     }
 
@@ -390,16 +373,23 @@ class provider implements
             return;
         }
 
+        $userid = $contextlist->get_user()->id;
         foreach ($contextlist->get_contexts() as $context) {
-            if ($context->contextlevel == CONTEXT_SYSTEM) {
-                $table = 'lti_tool_proxies';
-            } else if ($context->contextlevel == CONTEXT_COURSE) {
-                $table = 'lti_types';
-            } else {
-                continue;
-            }
+            // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+            $linkids = $DB->get_fieldset('lti_resource_link', 'id', ['contextid' => $context->id]);
+            [$insql, $inparams] = $DB->get_in_or_equal($linkids, SQL_PARAMS_NAMED);
+            $DB->delete_records_select(
+                'lti_submission',
+                "ltiid $insql AND userid = :userid",
+                array_merge($inparams, ['userid' => $userid]),
+            );
 
-            $DB->set_field_select($table, 'createdby', 0, 'createdby = ?', [$contextlist->get_user()->id]);
+            if ($context->contextlevel == CONTEXT_SYSTEM) {
+                $DB->set_field('lti_tool_proxies', 'createdby', 0, ['createdby' => $userid]);
+                $DB->set_field('lti_types', 'createdby', 0, ['course' => SITEID, 'createdby' => $userid]);
+            } else if ($context->contextlevel == CONTEXT_COURSE) {
+                $DB->set_field('lti_types', 'createdby', 0, ['course' => $context->instanceid, 'createdby' => $userid]);
+            }
         }
     }
 
@@ -415,42 +405,34 @@ class provider implements
         global $DB;
 
         $context = $userlist->get_context();
+        // TODO MDL-85891: In the following code, I assumed that ltiid is repurposed to refer to `lti_resourcelink.id`.
+        $linkids = $DB->get_fieldset('lti_resource_link', 'id', ['contextid' => $context->id]);
+        [$linksinsql, $linksinparams] = $DB->get_in_or_equal($linkids, SQL_PARAMS_NAMED);
+        [$usersinsql, $usersinparams] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
+        $DB->delete_records_select(
+            'lti_submission',
+            "ltiid $linksinsql AND userid $usersinsql",
+            array_merge($linksinparams, $usersinparams),
+        );
 
         if ($context->contextlevel == CONTEXT_SYSTEM) {
-            $table = 'lti_tool_proxies';
+            $DB->set_field_select('lti_tool_proxies', 'createdby', 0, "createdby $usersinsql", $usersinparams);
+            $DB->set_field_select(
+                'lti_types',
+                'createdby',
+                0,
+                "course = :siteid AND createdby $usersinsql",
+                array_merge($usersinparams, ['siteid' => SITEID])
+            );
         } else if ($context->contextlevel == CONTEXT_COURSE) {
-            $table = 'lti_types';
-        } else {
-            return;
+            $DB->set_field_select(
+                'lti_types',
+                'createdby',
+                0,
+                "course = :courseid AND createdby $usersinsql",
+                array_merge($usersinparams, ['courseid' => $context->instanceid])
+            );
         }
-
-        list($usersql, $userparams) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
-        $DB->set_field_select($table, 'createdby', 0, "createdby {$usersql}", $userparams);
-    }
-
-    /**
-     * Deletes the data from the LTI submission and instance tables.
-     *
-     * @param int $ltiid ID of the LTI submission.
-     * @param int|array|null $userids User ID or array of IDs to delete the data for.
-     * @return void
-     */
-    public static function delete_instance_data(int $ltiid, int|array $userids = null): void {
-        // TODO: Add handling for LTI instance table.
-
-        global $DB;
-
-        $params = ['ltiid' => $ltiid];
-        $sql = "ltiid = :ltiid";
-
-        if (!is_null($userids)) {
-            $userids = (array) $userids;
-            list($insql, $inparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-            $sql .= " AND userid {$insql}";
-            $params = array_merge($params, $inparams);
-        }
-
-        $DB->delete_records_select('lti_submission', $sql, $params);
     }
 
     /**
@@ -463,12 +445,12 @@ class provider implements
      * @param callable $export The function to export the dataset, receives the last value from $splitkey and the dataset.
      * @return void
      */
-    public static function recordset_loop_and_export(
-            \moodle_recordset $recordset,
-            string $splitkey,
-            $initial,
-            callable $reducer,
-            callable $export
+    protected static function recordset_loop_and_export(
+        \moodle_recordset $recordset,
+        string $splitkey,
+        $initial,
+        callable $reducer,
+        callable $export
     ) {
         $data = $initial;
         $lastid = null;
@@ -486,30 +468,5 @@ class provider implements
         if (!empty($lastid)) {
             $export($lastid, $data);
         }
-    }
-
-    /**
-     * Return a dict of LTI IDs mapped to their course module ID.
-     * TODO: This is used by export_user_data_lti_submissions() and shouldn't be here.
-     * TODO: Deal with this when export_user_data_lti_submissions() is fixed.
-     *
-     * @param array $cmids The course module IDs.
-     * @return array In the form of [$ltiid => $cmid].
-     */
-    protected static function get_lti_ids_to_cmids_from_cmids(array $cmids): array {
-        global $DB;
-
-        list($insql, $inparams) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED);
-        $sql = "SELECT lti.id, cm.id AS cmid
-                 FROM {lti} lti
-                 JOIN {modules} m
-                   ON m.name = :lti
-                 JOIN {course_modules} cm
-                   ON cm.instance = lti.id
-                  AND cm.module = m.id
-                WHERE cm.id $insql";
-        $params = array_merge($inparams, ['lti' => 'lti']);
-
-        return $DB->get_records_sql_menu($sql, $params);
     }
 }
